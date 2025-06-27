@@ -1,0 +1,14 @@
+{
+  "gui.anvilinnovate.template_selection": "Template Selection",
+  "gui.anvilinnovate.select_template_hint": "Select a template to apply",
+  "gui.close": "Close",
+
+  "tooltip.anvilinnovate.output": "Output",
+  "tooltip.anvilinnovate.pattern_size": "Pattern Size",
+
+  "narration.button.template": "Template button, %s",
+
+  "template.anvilinnovate.example_template": "Example Template",
+  "template.anvilinnovate.another_template": "Another Template",
+  "gui.anvilinnovate.carving_selection": "Carving Template Selection"
+}

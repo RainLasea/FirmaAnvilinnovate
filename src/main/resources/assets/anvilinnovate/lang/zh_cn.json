@@ -1,0 +1,14 @@
+{
+  "gui.anvilinnovate.template_selection": "模板选择",
+  "gui.anvilinnovate.select_template_hint": "选择一个要应用的模板",
+  "gui.close": "关闭",
+
+  "tooltip.anvilinnovate.output": "输出",
+  "tooltip.anvilinnovate.pattern_size": "图案大小",
+
+  "narration.button.template": "模板按钮，%s",
+
+  "template.anvilinnovate.example_template": "示例模板",
+  "template.anvilinnovate.another_template": "另一个模板",
+  "gui.anvilinnovate.carving_selection": "雕刻模板选择"
+}

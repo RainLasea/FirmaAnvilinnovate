@@ -1,0 +1,19 @@
+{
+  "tag": "flint_carving",
+  "name": "iron_sword",
+  "output": "minecraft:iron_sword",
+  "pattern": [
+    "     ##     ",
+    "    ####    ",
+    "   ######   ",
+    "    ####    ",
+    "     ##     ",
+    "     ##     ",
+    "     ##     ",
+    "     ##     ",
+    "    #  #    ",
+    "   #    #   ",
+    "  #      #  ",
+    " #        # "
+  ]
+}
