@@ -1,4 +1,4 @@
-package com.abysslasea.anvilinnovate.network;
+package com.abysslasea.anvilinnovate.template;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;

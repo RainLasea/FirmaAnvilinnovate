@@ -1,5 +1,6 @@
-package com.abysslasea.anvilinnovate.network;
+package com.abysslasea.anvilinnovate.template;
 
+import com.abysslasea.anvilinnovate.NetworkHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -38,7 +39,6 @@ public class TemplateSelectionScreen extends Screen {
         super.init();
         int centerX = this.width / 2;
 
-        // Get and sort templates by name (from json's "name" field)
         this.visibleTemplates = CarvingTemplateManager.getTemplateIds().stream()
                 .sorted(Comparator.comparing(this::getTemplateSortKey))
                 .toList();
@@ -120,7 +120,6 @@ public class TemplateSelectionScreen extends Screen {
                     .build());
         }
 
-        // Close button
         addRenderableWidget(Button.builder(Component.translatable("gui.close"), btn -> onClose())
                 .bounds(
                         centerX - 50,

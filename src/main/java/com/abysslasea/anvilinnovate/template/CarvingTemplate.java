@@ -1,25 +1,29 @@
-package com.abysslasea.anvilinnovate.network;
+package com.abysslasea.anvilinnovate.template;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 
 public class CarvingTemplate {
     private final ResourceLocation id;
-    private final String name;  // 新增name字段
-    private final ItemStack result;
+    private final String name;
     private final boolean[][] pattern;
+    private final ItemStack result;
 
-    public CarvingTemplate(ResourceLocation id, String name, ItemStack result, boolean[][] pattern) {
+    public CarvingTemplate(ResourceLocation id, String name, boolean[][] pattern, ItemStack result) {
         this.id = id;
         this.name = name;
-        this.result = result;
         this.pattern = validatePattern(pattern);
+        this.result = result;
+    }
+
+    public CarvingTemplate(ResourceLocation id, String name, boolean[][] pattern) {
+        this(id, name, pattern, ItemStack.EMPTY);
     }
 
     private boolean[][] validatePattern(boolean[][] pattern) {
@@ -38,22 +42,25 @@ public class CarvingTemplate {
 
     public static CarvingTemplate fromJson(ResourceLocation id, JsonObject json) {
         String name = json.has("name") ? json.get("name").getAsString() : id.getPath();
-
-        ItemStack result = parseOutputItem(json);
         boolean[][] pattern = parsePattern(json.getAsJsonArray("pattern"));
-        return new CarvingTemplate(id, name, result, pattern);
-    }
 
-    private static ItemStack parseOutputItem(JsonObject json) {
-        ResourceLocation itemId = new ResourceLocation(json.get("output").getAsString());
-        Item item = ForgeRegistries.ITEMS.getValue(itemId);
-        if (item == null) {
-            throw new IllegalArgumentException("Unknown item: " + itemId);
+        ItemStack result = ItemStack.EMPTY;
+        if (json.has("output")) {
+            String resultId = json.get("output").getAsString();
+            Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(resultId));
+            if (item != null) {
+                result = new ItemStack(item);
+            }
         }
-        return new ItemStack(item);
+
+        return new CarvingTemplate(id, name, pattern, result);
     }
 
     private static boolean[][] parsePattern(JsonArray patternArray) {
+        if (patternArray.size() != 12) {
+            throw new IllegalArgumentException("Pattern must have 12 rows");
+        }
+
         boolean[][] pattern = new boolean[12][12];
         for (int y = 0; y < 12; y++) {
             String row = patternArray.get(y).getAsString();
@@ -68,7 +75,7 @@ public class CarvingTemplate {
     private static void validateRow(int y, String row) {
         if (row.length() != 12) {
             throw new IllegalArgumentException(
-                    String.format("Row %d must be 12 characters (got '%s')", y+1, row)
+                    String.format("Row %d must be 12 characters (got '%s')", y + 1, row)
             );
         }
     }
@@ -76,8 +83,8 @@ public class CarvingTemplate {
     public CompoundTag serialize() {
         CompoundTag tag = new CompoundTag();
         tag.putString("id", id.toString());
-        tag.putString("name", name);  // 序列化时可选写入
-        tag.put("result", result.save(new CompoundTag()));
+        tag.putString("name", name);
+        tag.putString("result", BuiltInRegistries.ITEM.getKey(result.getItem()).toString());
 
         byte[] patternData = new byte[12 * 12];
         for (int y = 0; y < 12; y++) {
@@ -111,12 +118,20 @@ public class CarvingTemplate {
                 pattern[y][x] = buf.readBoolean();
             }
         }
-        return new CarvingTemplate(id, name, result, pattern);
+        return new CarvingTemplate(id, name, pattern, result);
     }
 
-    public ResourceLocation getId() { return id; }
-    public String getName() { return name; }
-    public ItemStack getResult() { return result.copy(); }
+    public ResourceLocation getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public ItemStack getResult() {
+        return result.copy();
+    }
 
     public boolean shouldCarve(int x, int y) {
         return x >= 0 && x < 12 && y >= 0 && y < 12 && pattern[y][x];

@@ -1,6 +1,6 @@
 package com.abysslasea.anvilinnovate;
 
-import com.abysslasea.anvilinnovate.block.flint.CarvingFlintSlabBlockRenderer;
+import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockRenderer;
 import com.abysslasea.anvilinnovate.block.ModBlocks;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,7 +15,7 @@ public class ClientSetup {
         event.enqueueWork(() -> {
             BlockEntityRenderers.register(
                     ModBlocks.CARVING_SLAB_BE.get(),
-                    CarvingFlintSlabBlockRenderer::new
+                    ChiseledFlintSlabBlockRenderer::new
             );
         });
     }

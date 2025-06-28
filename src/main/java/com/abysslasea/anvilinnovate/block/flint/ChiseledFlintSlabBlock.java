@@ -6,9 +6,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,8 +19,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class CarvingFlintSlabBlock extends Block {
-    public CarvingFlintSlabBlock() {
+public class ChiseledFlintSlabBlock extends Block implements EntityBlock {
+    public ChiseledFlintSlabBlock() {
         super(BlockBehaviour.Properties.of()
                 .strength(0.5f)
                 .noOcclusion()
@@ -26,28 +28,40 @@ public class CarvingFlintSlabBlock extends Block {
                 .instabreak()
         );
     }
-
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new ChiseledFlintSlabBlockEntity(pos, state);
+    }
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Block.box(0, 0, 0, 16, 1.6, 16); // 0.1格高 (16/160=0.1)
+        // 0.1格高的扁平形状 (16格=1格单位)
+        return Block.box(0, 0, 0, 16, 1.6, 16);
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (hand == InteractionHand.MAIN_HAND) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof CarvingFlintSlabBlockEntity slab) {
-                if (slab.getTemplateId() == null) return InteractionResult.PASS;
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
 
-                Vec3 hitPos = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
-                int gridX = (int) (hitPos.x() * 12);
-                int gridY = (int) (hitPos.z() * 12);
+        if (player.getItemInHand(hand).getItem() == Items.FLINT) {
+            return InteractionResult.PASS;
+        }
 
-                if (slab.tryCarve(gridX, gridY)) {
-                    level.playSound(null, pos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.5f, 1.0f);
-                    return InteractionResult.SUCCESS;
-                }
-            }
+        BlockEntity be = level.getBlockEntity(pos);
+        if (!(be instanceof ChiseledFlintSlabBlockEntity slab)) {
+            return InteractionResult.PASS;
+        }
+
+        if (slab.getTemplateId() == null) {
+            return InteractionResult.PASS;
+        }
+        Vec3 hitPos = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
+        int gridX = (int) (hitPos.x() * 12);
+        int gridY = (int) (hitPos.z() * 12);
+        if (slab.tryCarve(gridX, gridY)) {
+            level.playSound(null, pos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.5f, 1.0f);
+            return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
     }

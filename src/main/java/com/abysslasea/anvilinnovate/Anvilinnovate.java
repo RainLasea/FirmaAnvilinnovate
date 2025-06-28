@@ -2,8 +2,7 @@ package com.abysslasea.anvilinnovate;
 
 import com.abysslasea.anvilinnovate.block.ModBlocks;
 
-import com.abysslasea.anvilinnovate.network.CarvingTemplateManager;
-import com.abysslasea.anvilinnovate.network.NetworkHandler;
+import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;

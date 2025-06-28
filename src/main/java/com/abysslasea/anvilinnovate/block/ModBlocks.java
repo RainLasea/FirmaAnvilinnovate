@@ -1,8 +1,8 @@
 package com.abysslasea.anvilinnovate.block;
 
-import com.abysslasea.anvilinnovate.block.flint.CarvingFlintSlabBlockEntity;
+import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;
 
-import com.abysslasea.anvilinnovate.block.flint.CarvingFlintSlabBlock;
+import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.registries.DeferredRegister;
@@ -18,13 +18,13 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CARVING_SLAB = BLOCKS.register(
             "carving_slab",
-            CarvingFlintSlabBlock::new
+            ChiseledFlintSlabBlock::new
     );
 
-    public static final RegistryObject<BlockEntityType<CarvingFlintSlabBlockEntity>> CARVING_SLAB_BE =
+    public static final RegistryObject<BlockEntityType<ChiseledFlintSlabBlockEntity>> CARVING_SLAB_BE =
             BLOCK_ENTITIES.register("carving_slab", () ->
                     BlockEntityType.Builder.of(
-                            CarvingFlintSlabBlockEntity::new,
+                            ChiseledFlintSlabBlockEntity::new,
                             CARVING_SLAB.get()
                     ).build(null)
             );
