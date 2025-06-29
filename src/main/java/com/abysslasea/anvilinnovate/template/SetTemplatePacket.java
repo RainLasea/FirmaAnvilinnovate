@@ -5,6 +5,8 @@ import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.NetworkEvent;
@@ -41,6 +43,39 @@ public class SetTemplatePacket {
             BlockPos placePos = pkt.pos.above();
 
             if (!world.isEmptyBlock(placePos)) return;
+
+            if (!player.isCreative()) {
+                boolean consumed = false;
+
+                ItemStack mainHand = player.getMainHandItem();
+                if (mainHand.getItem() == Items.FLINT) {
+                    mainHand.shrink(1);
+                    consumed = true;
+                }
+
+                if (!consumed) {
+                    ItemStack offHand = player.getOffhandItem();
+                    if (offHand.getItem() == Items.FLINT) {
+                        offHand.shrink(1);
+                        consumed = true;
+                    }
+                }
+
+                if (!consumed) {
+                    for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                        ItemStack stack = player.getInventory().getItem(i);
+                        if (stack.getItem() == Items.FLINT) {
+                            stack.shrink(1);
+                            consumed = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!consumed) {
+                    return;
+                }
+            }
 
             boolean placed = world.setBlock(placePos, ModBlocks.CARVING_SLAB.get().defaultBlockState(), 3);
             if (!placed) return;
