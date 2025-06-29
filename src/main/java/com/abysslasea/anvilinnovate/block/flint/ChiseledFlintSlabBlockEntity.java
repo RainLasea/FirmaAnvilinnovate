@@ -1,21 +1,23 @@
 package com.abysslasea.anvilinnovate.block.flint;
 
 import com.abysslasea.anvilinnovate.block.ModBlocks;
+import com.abysslasea.anvilinnovate.template.CarvingTemplate;
+import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-
-import javax.annotation.Nullable;
 
 public class ChiseledFlintSlabBlockEntity extends BlockEntity {
 
     private ResourceLocation templateId;
-    private final boolean[][] carved = new boolean[12][12];
+    private final boolean[][] carved = new boolean[10][10];
 
     public ChiseledFlintSlabBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlocks.CARVING_SLAB_BE.get(), pos, state);
@@ -34,24 +36,69 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity {
     }
 
     public boolean isCarved(int x, int y) {
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) return false;
         return carved[y][x];
     }
 
     public void setCarved(int x, int y, boolean carvedState) {
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) return;
         carved[y][x] = carvedState;
         setChanged();
     }
 
     public boolean tryCarve(int x, int y) {
-        if (x < 0 || x >= 12 || y < 0 || y >= 12 || carved[y][x]) {
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) {
             return false;
         }
-        carved[y][x] = true;
-        setChanged();
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+
+        if (carved[y][x]) {
+            return false;
+        }
+
+        CarvingTemplate template = CarvingTemplateManager.getTemplate(templateId);
+        if (template == null) {
+            return false;
+        }
+
+        if (template.shouldCarve(x, y)) {
+            carved[y][x] = true;
+            setChanged();
+
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                if (isFinished(template)) {
+                    finishCarving(template);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isFinished(CarvingTemplate template) {
+        for (int y = 0; y < 10; y++) {
+            for (int x = 0; x < 10; x++) {
+                if (template.shouldCarve(x, y) && !carved[y][x]) {
+                    return false;
+                }
+            }
         }
         return true;
+    }
+
+    private void finishCarving(CarvingTemplate template) {
+        if (!(level instanceof ServerLevel)) return;
+
+        ItemStack output = template.getResult();
+        if (output.isEmpty()) return;
+
+        level.removeBlock(worldPosition, false);
+        ItemEntity itemEntity = new ItemEntity(level,
+                worldPosition.getX() + 0.5,
+                worldPosition.getY() + 0.5,
+                worldPosition.getZ() + 0.5,
+                output.copy());
+        level.addFreshEntity(itemEntity);
     }
 
     @Override
@@ -62,14 +109,13 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity {
         }
 
         CompoundTag carvedTag = new CompoundTag();
-        for (int y = 0; y < 12; y++) {
-            for (int x = 0; x < 12; x++) {
+        for (int y = 0; y < 10; y++) {
+            for (int x = 0; x < 10; x++) {
                 carvedTag.putBoolean(y + "_" + x, carved[y][x]);
             }
         }
         tag.put("carved", carvedTag);
     }
-
 
     @Override
     public void load(CompoundTag tag) {
@@ -82,8 +128,8 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity {
 
         if (tag.contains("carved")) {
             CompoundTag carvedTag = tag.getCompound("carved");
-            for (int y = 0; y < 12; y++) {
-                for (int x = 0; x < 12; x++) {
+            for (int y = 0; y < 10; y++) {
+                for (int x = 0; x < 10; x++) {
                     String key = y + "_" + x;
                     this.carved[y][x] = carvedTag.getBoolean(key);
                 }
@@ -93,18 +139,19 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = new CompoundTag();
+        CompoundTag tag = super.getUpdateTag();
         if (templateId != null) {
             tag.putString("template", templateId.toString());
         }
 
         CompoundTag carvedTag = new CompoundTag();
-        for (int y = 0; y < 12; y++) {
-            for (int x = 0; x < 12; x++) {
+        for (int y = 0; y < 10; y++) {
+            for (int x = 0; x < 10; x++) {
                 carvedTag.putBoolean(y + "_" + x, carved[y][x]);
             }
         }
         tag.put("carved", carvedTag);
+
         return tag;
     }
 
@@ -120,8 +167,8 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity {
 
         if (tag.contains("carved")) {
             CompoundTag carvedTag = tag.getCompound("carved");
-            for (int y = 0; y < 12; y++) {
-                for (int x = 0; x < 12; x++) {
+            for (int y = 0; y < 10; y++) {
+                for (int x = 0; x < 10; x++) {
                     String key = y + "_" + x;
                     this.carved[y][x] = carvedTag.getBoolean(key);
                 }

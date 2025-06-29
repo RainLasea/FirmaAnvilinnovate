@@ -10,6 +10,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class CarvingTemplate {
+    private static final int SIZE = 10;
+
     private final ResourceLocation id;
     private final String name;
     private final boolean[][] pattern;
@@ -27,15 +29,15 @@ public class CarvingTemplate {
     }
 
     private boolean[][] validatePattern(boolean[][] pattern) {
-        if (pattern.length != 12) {
-            throw new IllegalArgumentException("Pattern must have 12 rows");
+        if (pattern.length != SIZE) {
+            throw new IllegalArgumentException("Pattern must have " + SIZE + " rows");
         }
-        boolean[][] validated = new boolean[12][12];
-        for (int y = 0; y < 12; y++) {
-            if (pattern[y].length != 12) {
-                throw new IllegalArgumentException("Row " + y + " must have 12 columns");
+        boolean[][] validated = new boolean[SIZE][SIZE];
+        for (int y = 0; y < SIZE; y++) {
+            if (pattern[y].length != SIZE) {
+                throw new IllegalArgumentException("Row " + y + " must have " + SIZE + " columns");
             }
-            System.arraycopy(pattern[y], 0, validated[y], 0, 12);
+            System.arraycopy(pattern[y], 0, validated[y], 0, SIZE);
         }
         return validated;
     }
@@ -57,15 +59,15 @@ public class CarvingTemplate {
     }
 
     private static boolean[][] parsePattern(JsonArray patternArray) {
-        if (patternArray.size() != 12) {
-            throw new IllegalArgumentException("Pattern must have 12 rows");
+        if (patternArray.size() != SIZE) {
+            throw new IllegalArgumentException("Pattern must have " + SIZE + " rows");
         }
 
-        boolean[][] pattern = new boolean[12][12];
-        for (int y = 0; y < 12; y++) {
+        boolean[][] pattern = new boolean[SIZE][SIZE];
+        for (int y = 0; y < SIZE; y++) {
             String row = patternArray.get(y).getAsString();
             validateRow(y, row);
-            for (int x = 0; x < 12; x++) {
+            for (int x = 0; x < SIZE; x++) {
                 pattern[y][x] = (row.charAt(x) == '#');
             }
         }
@@ -73,9 +75,9 @@ public class CarvingTemplate {
     }
 
     private static void validateRow(int y, String row) {
-        if (row.length() != 12) {
+        if (row.length() != SIZE) {
             throw new IllegalArgumentException(
-                    String.format("Row %d must be 12 characters (got '%s')", y + 1, row)
+                    String.format("Row %d must be %d characters (got '%s')", y + 1, SIZE, row)
             );
         }
     }
@@ -86,10 +88,10 @@ public class CarvingTemplate {
         tag.putString("name", name);
         tag.putString("result", BuiltInRegistries.ITEM.getKey(result.getItem()).toString());
 
-        byte[] patternData = new byte[12 * 12];
-        for (int y = 0; y < 12; y++) {
-            for (int x = 0; x < 12; x++) {
-                patternData[y * 12 + x] = (byte) (pattern[y][x] ? 1 : 0);
+        byte[] patternData = new byte[SIZE * SIZE];
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                patternData[y * SIZE + x] = (byte) (pattern[y][x] ? 1 : 0);
             }
         }
         tag.putByteArray("pattern", patternData);
@@ -112,28 +114,24 @@ public class CarvingTemplate {
         ResourceLocation id = buf.readResourceLocation();
         String name = buf.readUtf(32767);
         ItemStack result = buf.readItem();
-        boolean[][] pattern = new boolean[12][12];
-        for (int y = 0; y < 12; y++) {
-            for (int x = 0; x < 12; x++) {
+        boolean[][] pattern = new boolean[SIZE][SIZE];
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
                 pattern[y][x] = buf.readBoolean();
             }
         }
         return new CarvingTemplate(id, name, pattern, result);
     }
-
     public ResourceLocation getId() {
         return id;
     }
-
     public String getName() {
         return name;
     }
-
     public ItemStack getResult() {
         return result.copy();
     }
-
     public boolean shouldCarve(int x, int y) {
-        return x >= 0 && x < 12 && y >= 0 && y < 12 && pattern[y][x];
+        return x >= 0 && x < SIZE && y >= 0 && y < SIZE && !pattern[y][x];
     }
 }

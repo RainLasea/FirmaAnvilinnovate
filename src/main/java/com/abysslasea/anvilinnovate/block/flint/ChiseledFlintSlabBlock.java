@@ -34,7 +34,6 @@ public class ChiseledFlintSlabBlock extends Block implements EntityBlock {
     }
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        // 0.1格高的扁平形状 (16格=1格单位)
         return Block.box(0, 0, 0, 16, 1.6, 16);
     }
 
@@ -56,12 +55,23 @@ public class ChiseledFlintSlabBlock extends Block implements EntityBlock {
         if (slab.getTemplateId() == null) {
             return InteractionResult.PASS;
         }
+
         Vec3 hitPos = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
-        int gridX = (int) (hitPos.x() * 12);
-        int gridY = (int) (hitPos.z() * 12);
-        if (slab.tryCarve(gridX, gridY)) {
-            level.playSound(null, pos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.5f, 1.0f);
-            return InteractionResult.SUCCESS;
+
+        float offset = (1f - 13f / 16f) / 2f;
+        float cellSize = (13f / 16f) / 10f;
+
+        float localX = (float) hitPos.x() - offset;
+        float localZ = (float) hitPos.z() - offset;
+
+        int gridX = (int) (localX / cellSize);
+        int gridY = (int) (localZ / cellSize);
+
+        if (gridX >= 0 && gridX < 10 && gridY >= 0 && gridY < 10) {
+            if (slab.tryCarve(gridX, gridY)) {
+                level.playSound(null, pos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.5f, 1.0f);
+                return InteractionResult.SUCCESS;
+            }
         }
         return InteractionResult.PASS;
     }

@@ -57,9 +57,13 @@ public class TemplateSelectionScreen extends Screen {
 
         int centerX = this.width / 2;
         int maxVisible = getMaxVisibleButtons();
+        int total = visibleTemplates.size();
 
-        for (int i = 0; i < maxVisible && (i + scrollOffset) < visibleTemplates.size(); i++) {
-            final ResourceLocation templateId = visibleTemplates.get(i + scrollOffset);
+        for (int i = 0; i < maxVisible; i++) {
+            int index = i + scrollOffset;
+            if (index >= total) break;
+
+            final ResourceLocation templateId = visibleTemplates.get(index);
             final CarvingTemplate template = CarvingTemplateManager.getTemplate(templateId);
             int yPos = TOP_PADDING + (i * BUTTON_SPACING);
 
@@ -76,12 +80,10 @@ public class TemplateSelectionScreen extends Screen {
                 public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
                     super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
 
-                    // Render item icon
                     guiGraphics.renderItem(template.getResult(),
                             this.getX() + ITEM_ICON_OFFSET,
                             this.getY() + ITEM_ICON_OFFSET);
 
-                    // Render button text with template name and item name
                     guiGraphics.drawString(
                             Minecraft.getInstance().font,
                             createButtonText(templateId, template.getResult()),
@@ -97,7 +99,6 @@ public class TemplateSelectionScreen extends Screen {
             addRenderableWidget(button);
         }
     }
-
     private void addControlButtons(int centerX) {
         // Scroll buttons
         if (visibleTemplates.size() > getMaxVisibleButtons()) {
@@ -165,7 +166,7 @@ public class TemplateSelectionScreen extends Screen {
                         .append(template.getResult().getHoverName())
                         .append("\n")
                         .append(Component.translatable("tooltip.anvilinnovate.pattern_size"))
-                        .append(": 12x12")
+                        .append(": 10x10")
         );
     }
 

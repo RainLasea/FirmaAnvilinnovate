@@ -24,10 +24,18 @@ public class CarvingTemplateManager extends SimpleJsonResourceReloadListener {
     protected void apply(Map<ResourceLocation, JsonElement> resources,
                          ResourceManager manager, ProfilerFiller profiler) {
         TEMPLATES.clear();
+
         resources.forEach((id, json) -> {
-            CarvingTemplate template = CarvingTemplate.fromJson(id, json.getAsJsonObject());
-            TEMPLATES.put(id, template);
-            });
+            try {
+                CarvingTemplate template = CarvingTemplate.fromJson(id, json.getAsJsonObject());
+                TEMPLATES.put(id, template);
+            } catch (Exception e) {
+                System.err.println("[CarvingTemplateManager] Failed to load template " + id + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+
+        System.out.println("[CarvingTemplateManager] Loaded " + TEMPLATES.size() + " valid templates.");
     }
 
     public static CarvingTemplate getTemplate(ResourceLocation id) {

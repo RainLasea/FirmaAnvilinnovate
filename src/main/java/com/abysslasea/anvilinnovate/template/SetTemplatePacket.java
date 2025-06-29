@@ -38,30 +38,16 @@ public class SetTemplatePacket {
             if (player == null) return;
 
             Level world = player.getCommandSenderWorld();
+            BlockPos placePos = pkt.pos.above();
 
-            BlockPos placePos = pkt.pos.above();  // 放置在上方一格
-
-            System.out.println("[SetTemplatePacket] Received packet.");
-            System.out.println("[SetTemplatePacket] Player position: " + player.blockPosition());
-            System.out.println("[SetTemplatePacket] Original pos: " + pkt.pos);
-            System.out.println("[SetTemplatePacket] Place block at pos (above): " + placePos);
-            System.out.println("[SetTemplatePacket] Template ID: " + pkt.templateId);
-
-            if (!world.isEmptyBlock(placePos)) {
-                System.out.println("[SetTemplatePacket] Target placePos is not empty: " + world.getBlockState(placePos));
-                System.out.println("[SetTemplatePacket] Aborting block placement.");
-                return;
-            }
+            if (!world.isEmptyBlock(placePos)) return;
 
             boolean placed = world.setBlock(placePos, ModBlocks.CARVING_SLAB.get().defaultBlockState(), 3);
-            System.out.println("[SetTemplatePacket] Attempted to place block: " + (placed ? "SUCCESS" : "FAILURE"));
+            if (!placed) return;
 
             BlockEntity be = world.getBlockEntity(placePos);
             if (be instanceof ChiseledFlintSlabBlockEntity slabBE) {
                 slabBE.setTemplateId(pkt.templateId);
-                System.out.println("[SetTemplatePacket] Set template ID on BlockEntity.");
-            } else {
-                System.out.println("[SetTemplatePacket] No BlockEntity found at placePos after placement.");
             }
         });
         ctx.get().setPacketHandled(true);
