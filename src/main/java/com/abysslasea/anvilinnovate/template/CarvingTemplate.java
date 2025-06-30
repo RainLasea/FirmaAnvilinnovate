@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -122,15 +123,23 @@ public class CarvingTemplate {
         }
         return new CarvingTemplate(id, name, pattern, result);
     }
+
     public ResourceLocation getId() {
         return id;
     }
+
     public String getName() {
         return name;
     }
+
+    public Component getDisplayName() {
+        return Component.translatable(name);
+    }
+
     public ItemStack getResult() {
         return result.copy();
     }
+
     public boolean shouldCarve(int x, int y) {
         return x >= 0 && x < SIZE && y >= 0 && y < SIZE && !pattern[y][x];
     }

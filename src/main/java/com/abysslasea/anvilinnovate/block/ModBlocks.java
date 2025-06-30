@@ -1,8 +1,7 @@
 package com.abysslasea.anvilinnovate.block;
 
-import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;
-
 import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlock;
+import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.registries.DeferredRegister;

@@ -5,8 +5,10 @@ import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.network.NetworkEvent;
@@ -17,6 +19,8 @@ public class SetTemplatePacket {
 
     private final BlockPos pos;
     private final ResourceLocation templateId;
+
+    private static final TagKey<Item> CARVING_FLINTS = ItemTags.create(new ResourceLocation("anvilinnovate", "carving_flints"));
 
     public SetTemplatePacket(BlockPos pos, ResourceLocation templateId) {
         this.pos = pos;
@@ -48,14 +52,14 @@ public class SetTemplatePacket {
                 boolean consumed = false;
 
                 ItemStack mainHand = player.getMainHandItem();
-                if (mainHand.getItem() == Items.FLINT) {
+                if (mainHand.is(CARVING_FLINTS)) {
                     mainHand.shrink(1);
                     consumed = true;
                 }
 
                 if (!consumed) {
                     ItemStack offHand = player.getOffhandItem();
-                    if (offHand.getItem() == Items.FLINT) {
+                    if (offHand.is(CARVING_FLINTS)) {
                         offHand.shrink(1);
                         consumed = true;
                     }
@@ -64,7 +68,7 @@ public class SetTemplatePacket {
                 if (!consumed) {
                     for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
                         ItemStack stack = player.getInventory().getItem(i);
-                        if (stack.getItem() == Items.FLINT) {
+                        if (stack.is(CARVING_FLINTS)) {
                             stack.shrink(1);
                             consumed = true;
                             break;

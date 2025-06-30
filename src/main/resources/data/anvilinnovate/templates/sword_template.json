@@ -1,6 +1,6 @@
 {
   "tag": "flint_carving",
-  "name": "iron_sword",
+  "name": "template.anvilinnovate.iron_sword",
   "output": "minecraft:iron_sword",
   "pattern": [
     "    ##    ",

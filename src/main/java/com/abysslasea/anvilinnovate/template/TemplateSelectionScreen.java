@@ -156,7 +156,7 @@ public class TemplateSelectionScreen extends Screen {
 
     private MutableComponent createButtonText(ResourceLocation id, ItemStack result) {
         CarvingTemplate template = CarvingTemplateManager.getTemplate(id);
-        return Component.literal(template.getName());
+        return Component.translatable(template.getName());
     }
 
     private Tooltip createTemplateTooltip(CarvingTemplate template) {
