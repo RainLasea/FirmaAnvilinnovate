@@ -1,0 +1,18 @@
+{
+  "type": "anvilinnovate:carving_template",
+  "name": "template.anvilinnovate.stone_knife_head",
+  "tag": "flint_carving",
+  "output": "tfc:stone/knife_head/igneous_extrusive",
+  "pattern": [
+    "    #     ",
+    "    #     ",
+    "    ##    ",
+    "    ##    ",
+    "    ##    ",
+    "    ###   ",
+    "    ###   ",
+    "    ###   ",
+    "    ###   ",
+    "    ###   "
+  ]
+}

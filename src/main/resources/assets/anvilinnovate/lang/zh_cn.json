@@ -2,12 +2,16 @@
   "gui.anvilinnovate.template_selection": "模板选择",
   "gui.anvilinnovate.select_template_hint": "选择一个要应用的模板",
   "gui.close": "关闭",
-
   "tooltip.anvilinnovate.output": "输出",
   "tooltip.anvilinnovate.pattern_size": "图案大小",
-
   "narration.button.template": "模板按钮，%s",
-  "template.anvilinnovate.iron_sword": "铁剑",
+
+  "template.anvilinnovate.stone_axe_head": "石斧头",
+  "template.anvilinnovate.stone_hammer_head": "石锤头",
+  "template.anvilinnovate.stone_hoe_head": "石锄头",
+  "template.anvilinnovate.stone_javelin_head": "石标枪头",
+  "template.anvilinnovate.stone_knife_head": "石刀刃",
+  "template.anvilinnovate.stone_shovel_head": "石铲头",
 
   "template.anvilinnovate.example_template": "示例模板",
   "template.anvilinnovate.another_template": "另一个模板",

@@ -3,11 +3,17 @@
   "gui.anvilinnovate.select_template_hint": "Select a template to apply",
   "gui.close": "Close",
 
-  "template.anvilinnovate.iron_sword": "Iron Sword",
   "tooltip.anvilinnovate.output": "Output",
   "tooltip.anvilinnovate.pattern_size": "Pattern Size",
 
   "narration.button.template": "Template button, %s",
+
+  "template.anvilinnovate.stone_axe_head": "Stone Axe Head",
+  "template.anvilinnovate.stone_hammer_head": "Stone Hammer Head",
+  "template.anvilinnovate.stone_hoe_head": "Stone Hoe Head",
+  "template.anvilinnovate.stone_javelin_head": "Stone Javelin Head",
+  "template.anvilinnovate.stone_knife_head": "Stone Knife Head",
+  "template.anvilinnovate.stone_shovel_head": "Stone Shovel Head",
 
   "template.anvilinnovate.example_template": "Example Template",
   "template.anvilinnovate.another_template": "Another Template",

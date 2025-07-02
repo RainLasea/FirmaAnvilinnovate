@@ -1,7 +1,8 @@
 {
+  "type": "anvilinnovate:carving_template",
   "tag": "flint_carving",
   "name": "template.anvilinnovate.stone_axe_head",
-  "output": "minecraft:stone_axe",
+  "output": "tfc:stone/axe_head/igneous_extrusive",
   "pattern": [
     "   ####   ",
     "   ####   ",

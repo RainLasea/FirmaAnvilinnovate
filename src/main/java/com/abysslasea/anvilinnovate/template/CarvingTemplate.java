@@ -3,7 +3,6 @@ package com.abysslasea.anvilinnovate.template;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -81,23 +80,6 @@ public class CarvingTemplate {
                     String.format("Row %d must be %d characters (got '%s')", y + 1, SIZE, row)
             );
         }
-    }
-
-    public CompoundTag serialize() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("id", id.toString());
-        tag.putString("name", name);
-        tag.putString("result", BuiltInRegistries.ITEM.getKey(result.getItem()).toString());
-
-        byte[] patternData = new byte[SIZE * SIZE];
-        for (int y = 0; y < SIZE; y++) {
-            for (int x = 0; x < SIZE; x++) {
-                patternData[y * SIZE + x] = (byte) (pattern[y][x] ? 1 : 0);
-            }
-        }
-        tag.putByteArray("pattern", patternData);
-
-        return tag;
     }
 
     public void writeToNetwork(FriendlyByteBuf buf) {

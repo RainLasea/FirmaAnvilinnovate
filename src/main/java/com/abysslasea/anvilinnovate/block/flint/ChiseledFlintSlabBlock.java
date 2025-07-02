@@ -24,7 +24,7 @@ public class ChiseledFlintSlabBlock extends Block implements EntityBlock {
         super(BlockBehaviour.Properties.of()
                 .strength(0.5f)
                 .noOcclusion()
-                .noCollission() // 无碰撞
+                .noCollission()
                 .instabreak()
         );
     }

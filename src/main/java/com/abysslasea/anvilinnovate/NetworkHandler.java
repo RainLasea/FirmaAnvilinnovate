@@ -1,7 +1,6 @@
 package com.abysslasea.anvilinnovate;
 
-import com.abysslasea.anvilinnovate.template.OpenTemplateScreenPacket;
-import com.abysslasea.anvilinnovate.template.SetTemplatePacket;
+import com.abysslasea.anvilinnovate.template.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkRegistry;
@@ -16,31 +15,19 @@ public class NetworkHandler {
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
     );
-    private static int packetId = 0;
 
     public static void register() {
-        CHANNEL.registerMessage(
-                packetId++,
-                SetTemplatePacket.class,
-                SetTemplatePacket::encode,
-                SetTemplatePacket::decode,
-                SetTemplatePacket::handle
-        );
-
-        CHANNEL.registerMessage(
-                packetId++,
-                OpenTemplateScreenPacket.class,
-                OpenTemplateScreenPacket::encode,
-                OpenTemplateScreenPacket::decode,
-                OpenTemplateScreenPacket::handle
-        );
+        int id = 0;
+        CHANNEL.registerMessage(id++, SetTemplatePacket.class, SetTemplatePacket::encode, SetTemplatePacket::decode, SetTemplatePacket::handle);
+        CHANNEL.registerMessage(id++, OpenTemplateScreenPacket.class, OpenTemplateScreenPacket::encode, OpenTemplateScreenPacket::decode, OpenTemplateScreenPacket::handle);
+        CHANNEL.registerMessage(id++, SyncTemplatesPacket.class, SyncTemplatesPacket::encode, SyncTemplatesPacket::decode, SyncTemplatesPacket::handle);
     }
 
     public static void sendToClient(ServerPlayer player, Object packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 
-    public static void sendToServer(SetTemplatePacket packet) {
+    public static void sendToServer(Object packet) {
         CHANNEL.sendToServer(packet);
     }
 }
