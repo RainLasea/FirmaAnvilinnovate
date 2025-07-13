@@ -6,6 +6,7 @@ import com.abysslasea.anvilinnovate.template.CarvingTemplate;
 import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
 import com.abysslasea.anvilinnovate.template.OpenTemplateScreenPacket;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -19,10 +20,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -31,7 +35,7 @@ public class EventHandlers {
 
     private static final TagKey<Item> CARVING_FLINTS = ItemTags.create(new ResourceLocation("anvilinnovate", "carving_flints"));
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOW)
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (event.getLevel().isClientSide()) {
             BlockState state = event.getLevel().getBlockState(event.getPos());
@@ -46,25 +50,34 @@ public class EventHandlers {
 
         Level level = event.getLevel();
         Player player = event.getEntity();
-        ItemStack heldItem = player.getMainHandItem();
-        BlockPos clickedPos = event.getPos();
-        BlockState clickedBlockState = level.getBlockState(clickedPos);
-        Block clickedBlock = clickedBlockState.getBlock();
+        BlockPos pos = event.getPos();
+        Direction face = event.getFace();
+        ItemStack held = player.getMainHandItem();
+        BlockState state = level.getBlockState(pos);
+        boolean isSlab = state.getBlock() == ModBlocks.CARVING_SLAB.get();
+        boolean flint = held.is(CARVING_FLINTS);
 
-        boolean isCarvingSlab = clickedBlock == ModBlocks.CARVING_SLAB.get();
-        boolean holdingFlint = heldItem.is(CARVING_FLINTS);
+        if (face == Direction.UP) {
+            BlockPos above = pos.above();
+            BlockState aboveState = level.getBlockState(above);
+            if (!aboveState.canBeReplaced() || aboveState.getBlock() instanceof DoorBlock || aboveState.getBlock() instanceof DoublePlantBlock) {
+                return;
+            }
+        }
 
-        if (isCarvingSlab) {
-            if (holdingFlint) {
-                handleCarvingSlabInteraction(level, player, clickedPos, event);
+        if (isSlab) {
+            if (flint) {
+                handleCarvingSlabInteraction(level, player, pos, event);
             } else {
                 event.setCanceled(true);
                 event.setCancellationResult(InteractionResult.FAIL);
             }
-        } else {
-            if (holdingFlint) {
-                if (player instanceof ServerPlayer serverPlayer) {
-                    NetworkHandler.sendToClient(serverPlayer, new OpenTemplateScreenPacket(clickedPos));
+        } else if (flint && face == Direction.UP) {
+            BlockPos above = pos.above();
+            BlockState aboveState = level.getBlockState(above);
+            if (aboveState.canBeReplaced() && !(aboveState.getBlock() instanceof DoorBlock) && !(aboveState.getBlock() instanceof DoublePlantBlock)) {
+                if (player instanceof ServerPlayer sp) {
+                    NetworkHandler.sendToClient(sp, new OpenTemplateScreenPacket(pos));
                     event.setCanceled(true);
                     event.setCancellationResult(InteractionResult.SUCCESS);
                 }
@@ -72,50 +85,42 @@ public class EventHandlers {
         }
     }
 
-    private static void handleCarvingSlabInteraction(Level level, Player player, BlockPos clickedPos, PlayerInteractEvent.RightClickBlock event) {
-        BlockEntity be = level.getBlockEntity(clickedPos);
-        if (!(be instanceof ChiseledFlintSlabBlockEntity slabBE)) return;
+    private static void handleCarvingSlabInteraction(Level level, Player player, BlockPos pos, PlayerInteractEvent.RightClickBlock event) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (!(be instanceof ChiseledFlintSlabBlockEntity slab)) return;
 
-        ResourceLocation templateId = slabBE.getTemplateId();
-        if (templateId == null) {
-            if (player instanceof ServerPlayer serverPlayer) {
-                NetworkHandler.sendToClient(serverPlayer, new OpenTemplateScreenPacket(clickedPos));
+        ResourceLocation id = slab.getTemplateId();
+        if (id == null) {
+            if (player instanceof ServerPlayer sp) {
+                NetworkHandler.sendToClient(sp, new OpenTemplateScreenPacket(pos));
             }
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
             return;
         }
 
-        Vec3 hitVec = event.getHitVec().getLocation();
-        Vec3 relativePos = hitVec.subtract(clickedPos.getX(), clickedPos.getY(), clickedPos.getZ());
-
-        float offset = (1f - 13f / 16f) / 2f;
-        float cellSize = (13f / 16f) / 10f;
-
-        float localX = (float) relativePos.x - offset;
-        float localZ = (float) relativePos.z - offset;
-
-        int gridX = (int) (localX / cellSize);
-        int gridY = (int) (localZ / cellSize);
-
-        if (gridX < 0 || gridX >= 10 || gridY < 0 || gridY >= 10) {
+        Vec3 hit = event.getHitVec().getLocation();
+        Vec3 rel = hit.subtract(pos.getX(), pos.getY(), pos.getZ());
+        float offset = (1f - 13f/16f)/2f;
+        float size = (13f/16f)/10f;
+        int x = (int)((rel.x - offset)/size);
+        int y = (int)((rel.z - offset)/size);
+        if (x<0||x>=10||y<0||y>=10) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
             return;
         }
 
-        CarvingTemplate template = CarvingTemplateManager.getTemplate(templateId);
-        if (template == null) {
+        CarvingTemplate t = CarvingTemplateManager.getTemplate(id);
+        if (t==null) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
             return;
         }
 
-        boolean shouldCarve = template.shouldCarve(gridX, gridY);
-        if (shouldCarve) {
-            boolean carvedNow = slabBE.tryCarve(gridX, gridY);
-            if (carvedNow) {
-                level.playSound(null, clickedPos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.5f, 1.0f);
+        if (t.shouldCarve(x,y)) {
+            if (slab.tryCarve(x,y)) {
+                level.playSound(null,pos,SoundEvents.STONE_HIT,SoundSource.BLOCKS,0.5f,1f);
                 event.setCanceled(true);
                 event.setCancellationResult(InteractionResult.SUCCESS);
             }

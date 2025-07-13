@@ -7,7 +7,7 @@ version = "${mod_version}"
 displayName = "${mod_name}"
 logoFile="icon.png"
 authors = "${mod_authors}"
-description = '''${mod_description}'''
+description = "${mod_description}"
 [[dependencies."${mod_id}"]]
 modId = "forge"
 mandatory = true
@@ -20,3 +20,7 @@ mandatory = true
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
+[builtin_datapack.anvilinnovate_worldgen]
+enabled = true
+required = false
+description = "AnvilInnovate's world generation features"
