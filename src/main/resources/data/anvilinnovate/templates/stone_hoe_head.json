@@ -2,7 +2,7 @@
   "type": "anvilinnovate:carving_template",
   "name": "template.anvilinnovate.stone_hoe_head",
   "tag": "flint_carving",
-  "output": "tfc:stone/hoe_head/igneous_extrusive",
+  "output": "tfc:stone/hoe_head/sedimentary",
   "pattern": [
     "          ",
     "          ",

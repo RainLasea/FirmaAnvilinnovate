@@ -33,7 +33,7 @@ public class FlintGroundCoverFeature extends Feature<SimpleBlockConfiguration> {
         BlockState flintState = getFlintState();
 
         if (level.isEmptyBlock(pos) && flintState.canSurvive(level, pos)) {
-            if (random.nextInt(5) == 0) {
+            if (random.nextFloat() < 0.55f) {
                 level.setBlock(pos, flintState, 2);
                 return true;
             }

@@ -1,6 +1,7 @@
 package com.abysslasea.anvilinnovate;
 
 import com.abysslasea.anvilinnovate.block.ModBlocks;
+import com.abysslasea.anvilinnovate.item.stonethrower.ThrowingStones;
 import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
 import com.abysslasea.anvilinnovate.world.ModBiomeModifiers;
 import com.abysslasea.anvilinnovate.world.ModFeaturesRegistry;
@@ -35,6 +36,7 @@ public class Anvilinnovate {
         MinecraftForge.EVENT_BUS.register(CarvingTemplateManager.INSTANCE);
 
         ModBiomeModifiers.BIOME_MODIFIERS.register(bus);
+        ThrowingStones.ENTITY_TYPES.register(bus);
     }
 
     @SubscribeEvent

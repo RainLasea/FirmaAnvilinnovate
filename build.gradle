@@ -27,6 +27,7 @@ base {
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
+    modularity.inferModulePath = false
 }
 
 minecraft {
@@ -84,6 +85,10 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        name = "JEI"
+        url = "https://maven.blamejared.com/"
+    }
 }
 
 dependencies {
@@ -91,6 +96,9 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation (fg.deobf("curse.maven:ctm-306770:6164575"))
     implementation (fg.deobf("curse.maven:ctm-302973:6187491"))
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
+    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
 }
 
 tasks.named('processResources', ProcessResources).configure {
