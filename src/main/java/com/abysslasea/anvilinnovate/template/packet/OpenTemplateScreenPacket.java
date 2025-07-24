@@ -1,5 +1,6 @@
-package com.abysslasea.anvilinnovate.template;
+package com.abysslasea.anvilinnovate.template.packet;
 
+import com.abysslasea.anvilinnovate.client.screen.TemplateSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

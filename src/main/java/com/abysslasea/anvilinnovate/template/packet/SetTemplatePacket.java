@@ -1,4 +1,4 @@
-package com.abysslasea.anvilinnovate.template;
+package com.abysslasea.anvilinnovate.template.packet;
 
 import com.abysslasea.anvilinnovate.block.ModBlocks;
 import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;

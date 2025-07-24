@@ -1,5 +1,7 @@
-package com.abysslasea.anvilinnovate.template;
+package com.abysslasea.anvilinnovate.template.packet;
 
+import com.abysslasea.anvilinnovate.template.CarvingTemplate;
+import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 

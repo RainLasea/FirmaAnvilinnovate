@@ -17,5 +17,8 @@
 
   "template.anvilinnovate.example_template": "Example Template",
   "template.anvilinnovate.another_template": "Another Template",
-  "gui.anvilinnovate.carving_selection": "Carving Template Selection"
+  "gui.anvilinnovate.carving_selection": "Carving Template Selection",
+
+  "block.anvilinnovate.carving_slab": "Carving Slab",
+  "gui.anvilinnovate.carving_hint": "Carve"
 }

@@ -1,6 +1,8 @@
 package com.abysslasea.anvilinnovate;
 
-import com.abysslasea.anvilinnovate.template.*;
+import com.abysslasea.anvilinnovate.template.packet.OpenTemplateScreenPacket;
+import com.abysslasea.anvilinnovate.template.packet.SetTemplatePacket;
+import com.abysslasea.anvilinnovate.template.packet.SyncTemplatesPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkRegistry;

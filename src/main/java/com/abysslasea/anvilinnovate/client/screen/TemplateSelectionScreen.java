@@ -1,6 +1,9 @@
-package com.abysslasea.anvilinnovate.template;
+package com.abysslasea.anvilinnovate.client.screen;
 
 import com.abysslasea.anvilinnovate.NetworkHandler;
+import com.abysslasea.anvilinnovate.template.packet.SetTemplatePacket;
+import com.abysslasea.anvilinnovate.template.CarvingTemplate;
+import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;

@@ -34,10 +34,10 @@ public class StoneSkipHandler {
 
         if (!level.isClientSide) {
             StoneSkipEntity stone = new StoneSkipEntity(
-                    ThrowingStones.STONE_SKIP.get(),
                     level,
                     player,
-                    stack.copy()
+                    stack.copy(),
+                    (float)(Math.random() * 20f - 10f)
             );
 
             stone.shootFromRotation(player, player.getXRot(), player.getYRot(), 0f, 0.8f, 1f);

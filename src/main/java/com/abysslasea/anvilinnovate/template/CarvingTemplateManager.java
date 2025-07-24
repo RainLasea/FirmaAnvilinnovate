@@ -1,6 +1,7 @@
 package com.abysslasea.anvilinnovate.template;
 
 import com.abysslasea.anvilinnovate.NetworkHandler;
+import com.abysslasea.anvilinnovate.template.packet.SyncTemplatesPacket;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;

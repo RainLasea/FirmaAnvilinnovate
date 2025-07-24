@@ -1,5 +1,6 @@
 package com.abysslasea.anvilinnovate.block.flint;
 
+import com.abysslasea.anvilinnovate.block.FloatingUIRenderer;
 import com.abysslasea.anvilinnovate.block.ModBlocks;
 import com.abysslasea.anvilinnovate.template.CarvingTemplate;
 import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
@@ -16,10 +17,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChiseledFlintSlabBlockEntity extends BlockEntity {
+public class ChiseledFlintSlabBlockEntity extends BlockEntity implements FloatingUIRenderer.FloatingUIRenderable {
 
     private ResourceLocation templateId;
     private final boolean[][] carved = new boolean[10][10];
+
+    private boolean lookedAt = false;
 
     public ChiseledFlintSlabBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlocks.CARVING_SLAB_BE.get(), pos, state);
@@ -246,5 +249,15 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity {
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
         handleUpdateTag(pkt.getTag());
+    }
+
+    @Override
+    public boolean shouldRenderFloatingUI() {
+        return lookedAt;
+    }
+
+    @Override
+    public void setLookedAt(boolean lookedAt) {
+        this.lookedAt = lookedAt;
     }
 }
