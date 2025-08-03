@@ -11,31 +11,36 @@ import java.util.function.Supplier;
 
 public class OpenTemplateScreenPacket {
     private final BlockPos pos;
+    private final String templateType;
 
-    public OpenTemplateScreenPacket(BlockPos pos) {
+    public OpenTemplateScreenPacket(BlockPos pos, String templateType) {
         this.pos = pos;
+        this.templateType = templateType;
     }
 
     public static void encode(OpenTemplateScreenPacket pkt, FriendlyByteBuf buf) {
         buf.writeBlockPos(pkt.pos);
+        buf.writeUtf(pkt.templateType);
     }
 
     public static OpenTemplateScreenPacket decode(FriendlyByteBuf buf) {
-        return new OpenTemplateScreenPacket(buf.readBlockPos());
+        BlockPos pos = buf.readBlockPos();
+        String templateType = buf.readUtf();
+        return new OpenTemplateScreenPacket(pos, templateType);
     }
 
     public static void handle(OpenTemplateScreenPacket pkt, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level != null) {
-                mc.execute(() -> {
-                    mc.setScreen(new TemplateSelectionScreen(
-                            pkt.pos,
-                            Component.translatable("gui.anvilinnovate.carving_selection")
-                    ));
-                });
+                mc.setScreen(new TemplateSelectionScreen(
+                        pkt.pos,
+                        Component.translatable("gui.anvilinnovate.template_selection"),
+                        pkt.templateType
+                ));
             }
         });
         ctx.get().setPacketHandled(true);
     }
+
 }

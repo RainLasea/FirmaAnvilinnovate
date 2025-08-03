@@ -29,12 +29,14 @@ public class TemplateSelectionScreen extends Screen {
     private static final int SCROLL_BUTTON_SIZE = 20;
 
     private final BlockPos slabPos;
+    private final String templateType;
     private List<ResourceLocation> visibleTemplates;
     private int scrollOffset = 0;
 
-    public TemplateSelectionScreen(BlockPos pos, Component title) {
+    public TemplateSelectionScreen(BlockPos pos, Component title, String templateType) {
         super(title);
         this.slabPos = pos;
+        this.templateType = templateType;
         this.visibleTemplates = List.of();
     }
 
@@ -43,6 +45,10 @@ public class TemplateSelectionScreen extends Screen {
         super.init();
         Minecraft.getInstance().tell(() -> {
             this.visibleTemplates = CarvingTemplateManager.getTemplateIds().stream()
+                    .filter(id -> {
+                        CarvingTemplate template = CarvingTemplateManager.getTemplate(id);
+                        return template != null && template.getType().equals(templateType);
+                    })
                     .sorted(Comparator.comparing(this::getTemplateSortKey))
                     .collect(Collectors.toList());
             refreshTemplateButtons();
@@ -167,9 +173,6 @@ public class TemplateSelectionScreen extends Screen {
                 Component.translatable("tooltip.anvilinnovate.output")
                         .append(": ")
                         .append(template.getResult().getHoverName())
-                        .append("\n")
-                        .append(Component.translatable("tooltip.anvilinnovate.pattern_size"))
-                        .append(": 10x10")
         );
     }
 

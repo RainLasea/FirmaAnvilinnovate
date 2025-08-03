@@ -1,5 +1,5 @@
 {
-  "type": "anvilinnovate:carving_template",
+  "type": "carving_template",
   "name": "template.anvilinnovate.stone_hammer_head",
   "tag": "flint_carving",
   "output": "tfc:stone/hammer_head/sedimentary",

@@ -2,9 +2,7 @@ package com.abysslasea.anvilinnovate.template;
 
 import com.abysslasea.anvilinnovate.NetworkHandler;
 import com.abysslasea.anvilinnovate.template.packet.SyncTemplatesPacket;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import com.google.gson.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,9 +45,14 @@ public class CarvingTemplateManager extends SimpleJsonResourceReloadListener {
         SERVER_TEMPLATES.clear();
         resources.forEach((id, json) -> {
             try {
-                CarvingTemplate template = CarvingTemplate.fromJson(id, json.getAsJsonObject());
+                JsonObject obj = json.getAsJsonObject();
+                String type = obj.has("type") ? obj.get("type").getAsString() : "anvilinnovate:carving_template";
+
+                CarvingTemplate template = CarvingTemplate.fromJson(id, obj);
                 SERVER_TEMPLATES.put(id, template);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                System.err.println("Failed to load template " + id + ": " + e.getMessage());
+            }
         });
         if (server != null) {
             syncToPlayers();

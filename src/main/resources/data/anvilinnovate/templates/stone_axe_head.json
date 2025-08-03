@@ -1,5 +1,5 @@
 {
-  "type": "anvilinnovate:carving_template",
+  "type": "carving_template",
   "tag": "flint_carving",
   "name": "template.anvilinnovate.stone_axe_head",
   "output": "tfc:stone/axe_head/sedimentary",

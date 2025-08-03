@@ -1,5 +1,7 @@
 package com.abysslasea.anvilinnovate.block;
 
+import com.abysslasea.anvilinnovate.block.clay.ClayFormingBlock;
+import com.abysslasea.anvilinnovate.block.clay.ClayFormingBlockEntity;
 import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlock;
 import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockEntity;
 import net.minecraft.world.level.block.Block;
@@ -25,6 +27,19 @@ public class ModBlocks {
                     BlockEntityType.Builder.of(
                             ChiseledFlintSlabBlockEntity::new,
                             CARVING_SLAB.get()
+                    ).build(null)
+            );
+
+    public static final RegistryObject<Block> CLAY_FORMING = BLOCKS.register(
+            "clay_forming",
+            ClayFormingBlock::new
+    );
+
+    public static final RegistryObject<BlockEntityType<ClayFormingBlockEntity>> CLAY_FORMING_BE =
+            BLOCK_ENTITIES.register("clay_forming", () ->
+                    BlockEntityType.Builder.of(
+                            ClayFormingBlockEntity::new,
+                            CLAY_FORMING.get()
                     ).build(null)
             );
 }

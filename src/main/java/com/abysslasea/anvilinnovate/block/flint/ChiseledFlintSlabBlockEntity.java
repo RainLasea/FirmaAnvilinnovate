@@ -4,6 +4,7 @@ import com.abysslasea.anvilinnovate.block.FloatingUIRenderer;
 import com.abysslasea.anvilinnovate.block.ModBlocks;
 import com.abysslasea.anvilinnovate.template.CarvingTemplate;
 import com.abysslasea.anvilinnovate.template.CarvingTemplateManager;
+import com.abysslasea.anvilinnovate.template.packet.SetTemplatePacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -14,21 +15,25 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChiseledFlintSlabBlockEntity extends BlockEntity implements FloatingUIRenderer.FloatingUIRenderable {
+public class ChiseledFlintSlabBlockEntity extends BlockEntity implements
+        FloatingUIRenderer.FloatingUIRenderable,
+        SetTemplatePacket.TemplateAssignable {
 
     private ResourceLocation templateId;
     private final boolean[][] carved = new boolean[10][10];
-
     private boolean lookedAt = false;
 
     public ChiseledFlintSlabBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlocks.CARVING_SLAB_BE.get(), pos, state);
     }
 
-    public void setTemplateId(ResourceLocation id) {
+    @Override
+    public void setTemplateId(@NotNull ResourceLocation id) {
         this.templateId = id;
         setChanged();
         if (level != null && !level.isClientSide) {
@@ -52,27 +57,20 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
     }
 
     public boolean tryCarve(int x, int y) {
-        if (x < 0 || x >= 10 || y < 0 || y >= 10) {
-            return false;
-        }
-
-        if (carved[y][x]) {
-            return false;
-        }
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) return false;
+        if (carved[y][x]) return false;
 
         CarvingTemplate template = CarvingTemplateManager.getTemplate(templateId);
-        if (template == null) {
-            return false;
-        }
+        if (template == null) return false;
 
-        if (template.shouldCarve(x, y)) {
+        if (template.shouldCarve(x, y, 0)) {
             carved[y][x] = true;
             setChanged();
 
             if (level != null && !level.isClientSide) {
-                checkAndBreakIsolatedRegions(template);
+                checkAndBreakIsolatedRegionsWithParticles(template);
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2 | 4);
 
-                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
                 if (isFinished(template)) {
                     finishCarving(template);
                 }
@@ -82,13 +80,13 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
         return false;
     }
 
-    private void checkAndBreakIsolatedRegions(CarvingTemplate template) {
+    private void checkAndBreakIsolatedRegionsWithParticles(CarvingTemplate template) {
         boolean[][] visited = new boolean[10][10];
         List<List<int[]>> regions = new ArrayList<>();
 
         for (int y = 0; y < 10; y++) {
             for (int x = 0; x < 10; x++) {
-                if (!carved[y][x] && template.shouldCarve(x, y) && !visited[y][x]) {
+                if (!carved[y][x] && template.shouldCarve(x, y, 0) && !visited[y][x]) {
                     List<int[]> region = new ArrayList<>();
                     findConnectedRegion(template, x, y, visited, region);
                     regions.add(region);
@@ -96,13 +94,21 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
             }
         }
 
+        boolean anyChanged = false;
         for (List<int[]> region : regions) {
             if (isIsolatedFromKept(region, template)) {
                 for (int[] pos : region) {
                     int px = pos[0], py = pos[1];
                     carved[py][px] = true;
+                    anyChanged = true;
                 }
-                setChanged();
+            }
+        }
+
+        if (anyChanged) {
+            setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             }
         }
     }
@@ -111,24 +117,24 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
                                      boolean[][] visited, List<int[]> region) {
         if (x < 0 || x >= 10 || y < 0 || y >= 10) return;
         if (visited[y][x]) return;
-        if (carved[y][x] || !template.shouldCarve(x, y)) return;
+        if (carved[y][x] || !template.shouldCarve(x, y, 0)) return;
 
         visited[y][x] = true;
         region.add(new int[]{x, y});
 
-        findConnectedRegion(template, x+1, y, visited, region);
-        findConnectedRegion(template, x-1, y, visited, region);
-        findConnectedRegion(template, x, y+1, visited, region);
-        findConnectedRegion(template, x, y-1, visited, region);
+        findConnectedRegion(template, x + 1, y, visited, region);
+        findConnectedRegion(template, x - 1, y, visited, region);
+        findConnectedRegion(template, x, y + 1, visited, region);
+        findConnectedRegion(template, x, y - 1, visited, region);
     }
 
     private boolean isIsolatedFromKept(List<int[]> region, CarvingTemplate template) {
         for (int[] pos : region) {
             int x = pos[0], y = pos[1];
-            if ((x > 0 && !template.shouldCarve(x-1, y)) ||
-                    (x < 9 && !template.shouldCarve(x+1, y)) ||
-                    (y > 0 && !template.shouldCarve(x, y-1)) ||
-                    (y < 9 && !template.shouldCarve(x, y+1))) {
+            if ((x > 0 && !template.shouldCarve(x - 1, y, 0)) ||
+                    (x < 9 && !template.shouldCarve(x + 1, y, 0)) ||
+                    (y > 0 && !template.shouldCarve(x, y - 1, 0)) ||
+                    (y < 9 && !template.shouldCarve(x, y + 1, 0))) {
                 return false;
             }
         }
@@ -138,7 +144,7 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
     private boolean isFinished(CarvingTemplate template) {
         for (int y = 0; y < 10; y++) {
             for (int x = 0; x < 10; x++) {
-                if (template.shouldCarve(x, y) && !carved[y][x]) {
+                if (template.shouldCarve(x, y, 0) && !carved[y][x]) {
                     return false;
                 }
             }
@@ -182,8 +188,9 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
         super.load(tag);
         if (tag.contains("template")) {
             String id = tag.getString("template");
-            if (CarvingTemplateManager.getTemplate(new ResourceLocation(id)) != null) {
-                this.templateId = new ResourceLocation(id);
+            ResourceLocation resId = new ResourceLocation(id);
+            if (CarvingTemplateManager.getTemplate(resId) != null) {
+                this.templateId = resId;
             } else {
                 this.templateId = null;
             }
@@ -216,7 +223,6 @@ public class ChiseledFlintSlabBlockEntity extends BlockEntity implements Floatin
             }
         }
         tag.put("carved", carvedTag);
-
         return tag;
     }
 

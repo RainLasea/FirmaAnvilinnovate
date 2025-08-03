@@ -213,7 +213,7 @@ public class ChiseledFlintSlabBlockRenderer implements BlockEntityRenderer<Chise
 
         for (int y = 0; y < GRID_SIZE; y++) {
             for (int x = 0; x < GRID_SIZE; x++) {
-                if (!entity.isCarved(x, y) && template.shouldCarve(x, y)) {
+                if (!entity.isCarved(x, y) && template.shouldCarve(x, y,0)) {
                     float dx = OFFSET + x * CELL_SIZE;
                     float dz = OFFSET + y * CELL_SIZE;
 

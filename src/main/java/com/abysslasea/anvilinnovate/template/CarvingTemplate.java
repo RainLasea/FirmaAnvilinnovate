@@ -10,41 +10,37 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class CarvingTemplate {
-    private static final int SIZE = 10;
-
     private final ResourceLocation id;
     private final String name;
-    private final boolean[][] pattern;
+    private final String type;
     private final ItemStack result;
+    private final boolean[][][] pattern;
+    private final int sizeX, sizeY, sizeZ;
 
-    public CarvingTemplate(ResourceLocation id, String name, boolean[][] pattern, ItemStack result) {
+    public CarvingTemplate(ResourceLocation id, String name, String type, boolean[][][] pattern, ItemStack result) {
         this.id = id;
         this.name = name;
-        this.pattern = validatePattern(pattern);
+        this.type = type;
         this.result = result;
+        this.sizeZ = pattern.length;
+        this.sizeY = pattern[0].length;
+        this.sizeX = pattern[0][0].length;
+        this.pattern = validatePattern(pattern);
     }
 
-    public CarvingTemplate(ResourceLocation id, String name, boolean[][] pattern) {
-        this(id, name, pattern, ItemStack.EMPTY);
-    }
-
-    private boolean[][] validatePattern(boolean[][] pattern) {
-        if (pattern.length != SIZE) {
-            throw new IllegalArgumentException("Pattern must have " + SIZE + " rows");
-        }
-        boolean[][] validated = new boolean[SIZE][SIZE];
-        for (int y = 0; y < SIZE; y++) {
-            if (pattern[y].length != SIZE) {
-                throw new IllegalArgumentException("Row " + y + " must have " + SIZE + " columns");
+    private boolean[][][] validatePattern(boolean[][][] pattern) {
+        for (int z = 0; z < pattern.length; z++) {
+            if (pattern[z].length != sizeY) throw new IllegalArgumentException("All layers must have " + sizeY + " rows");
+            for (int y = 0; y < sizeY; y++) {
+                if (pattern[z][y].length != sizeX) throw new IllegalArgumentException("All rows must have " + sizeX + " columns");
             }
-            System.arraycopy(pattern[y], 0, validated[y], 0, SIZE);
         }
-        return validated;
+        return pattern;
     }
 
     public static CarvingTemplate fromJson(ResourceLocation id, JsonObject json) {
         String name = json.has("name") ? json.get("name").getAsString() : id.getPath();
-        boolean[][] pattern = parsePattern(json.getAsJsonArray("pattern"));
+        String type = json.has("type") ? json.get("type").getAsString() : "carving_template";
 
         ItemStack result = ItemStack.EMPTY;
         if (json.has("output")) {
@@ -55,55 +51,76 @@ public class CarvingTemplate {
             }
         }
 
-        return new CarvingTemplate(id, name, pattern, result);
-    }
+        JsonArray patternArray = json.getAsJsonArray("pattern");
 
-    private static boolean[][] parsePattern(JsonArray patternArray) {
-        if (patternArray.size() != SIZE) {
-            throw new IllegalArgumentException("Pattern must have " + SIZE + " rows");
-        }
-
-        boolean[][] pattern = new boolean[SIZE][SIZE];
-        for (int y = 0; y < SIZE; y++) {
-            String row = patternArray.get(y).getAsString();
-            validateRow(y, row);
-            for (int x = 0; x < SIZE; x++) {
-                pattern[y][x] = (row.charAt(x) == '#');
+        boolean[][][] pattern;
+        if (patternArray.get(0).isJsonPrimitive()) { // 2D flat
+            int size = patternArray.size();
+            pattern = new boolean[1][size][size];
+            for (int y = 0; y < size; y++) {
+                String row = patternArray.get(y).getAsString();
+                if (row.length() != size) {
+                    throw new IllegalArgumentException("Row " + y + " must have " + size + " columns");
+                }
+                for (int x = 0; x < size; x++) {
+                    pattern[0][y][x] = row.charAt(x) == '#';
+                }
+            }
+        } else {
+            int layers = patternArray.size();
+            pattern = new boolean[layers][][];
+            for (int z = 0; z < layers; z++) {
+                JsonArray layerArray = patternArray.get(z).getAsJsonArray();
+                int rows = layerArray.size();
+                pattern[z] = new boolean[rows][];
+                for (int y = 0; y < rows; y++) {
+                    String row = layerArray.get(y).getAsString();
+                    int cols = row.length();
+                    pattern[z][y] = new boolean[cols];
+                    for (int x = 0; x < cols; x++) {
+                        pattern[z][y][x] = row.charAt(x) == '#';
+                    }
+                }
             }
         }
-        return pattern;
-    }
 
-    private static void validateRow(int y, String row) {
-        if (row.length() != SIZE) {
-            throw new IllegalArgumentException(
-                    String.format("Row %d must be %d characters (got '%s')", y + 1, SIZE, row)
-            );
-        }
+        return new CarvingTemplate(id, name, type, pattern, result);
     }
 
     public void writeToNetwork(FriendlyByteBuf buf) {
         buf.writeResourceLocation(id);
         buf.writeUtf(name);
+        buf.writeUtf(type);
         buf.writeItem(result);
-        for (boolean[] row : pattern) {
-            for (boolean cell : row) {
-                buf.writeBoolean(cell);
+        buf.writeVarInt(sizeZ);
+        buf.writeVarInt(sizeY);
+        buf.writeVarInt(sizeX);
+        for (int z = 0; z < sizeZ; z++) {
+            for (int y = 0; y < sizeY; y++) {
+                for (int x = 0; x < sizeX; x++) {
+                    buf.writeBoolean(pattern[z][y][x]);
+                }
             }
         }
     }
 
     public static CarvingTemplate readFromNetwork(FriendlyByteBuf buf) {
         ResourceLocation id = buf.readResourceLocation();
-        String name = buf.readUtf(32767);
+        String name = buf.readUtf();
+        String type = buf.readUtf(); // 读取模板类型
         ItemStack result = buf.readItem();
-        boolean[][] pattern = new boolean[SIZE][SIZE];
-        for (int y = 0; y < SIZE; y++) {
-            for (int x = 0; x < SIZE; x++) {
-                pattern[y][x] = buf.readBoolean();
+        int z = buf.readVarInt();
+        int y = buf.readVarInt();
+        int x = buf.readVarInt();
+        boolean[][][] pattern = new boolean[z][y][x];
+        for (int dz = 0; dz < z; dz++) {
+            for (int dy = 0; dy < y; dy++) {
+                for (int dx = 0; dx < x; dx++) {
+                    pattern[dz][dy][dx] = buf.readBoolean();
+                }
             }
         }
-        return new CarvingTemplate(id, name, pattern, result);
+        return new CarvingTemplate(id, name, type, pattern, result);
     }
 
     public ResourceLocation getId() {
@@ -114,6 +131,10 @@ public class CarvingTemplate {
         return name;
     }
 
+    public String getType() {
+        return type;
+    }
+
     public Component getDisplayName() {
         return Component.translatable(name);
     }
@@ -122,7 +143,15 @@ public class CarvingTemplate {
         return result.copy();
     }
 
-    public boolean shouldCarve(int x, int y) {
-        return x >= 0 && x < SIZE && y >= 0 && y < SIZE && !pattern[y][x];
+    public boolean[][][] getPattern() {
+        return this.pattern;
     }
+
+    public boolean shouldCarve(int x, int y, int z) {
+        return x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ && !pattern[z][y][x];
+    }
+
+    public int getSizeX() { return sizeX; }
+    public int getSizeY() { return sizeY; }
+    public int getSizeZ() { return sizeZ; }
 }

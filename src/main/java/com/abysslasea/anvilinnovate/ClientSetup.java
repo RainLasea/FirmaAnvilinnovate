@@ -1,6 +1,7 @@
 package com.abysslasea.anvilinnovate;
 
 import com.abysslasea.anvilinnovate.block.flint.ChiseledFlintSlabBlockRenderer;
+import com.abysslasea.anvilinnovate.block.clay.ClayFormingBlockRenderer;
 import com.abysslasea.anvilinnovate.block.ModBlocks;
 import com.abysslasea.anvilinnovate.item.stonethrower.ThrowingStones;
 import com.abysslasea.anvilinnovate.item.stonethrower.StoneSkipRenderer;
@@ -19,6 +20,10 @@ public class ClientSetup {
             BlockEntityRenderers.register(
                     ModBlocks.CARVING_SLAB_BE.get(),
                     ChiseledFlintSlabBlockRenderer::new
+            );
+            BlockEntityRenderers.register(
+                    ModBlocks.CLAY_FORMING_BE.get(),
+                    ClayFormingBlockRenderer::new
             );
             EntityRenderers.register(ThrowingStones.STONE_SKIP.get(), StoneSkipRenderer::new);
         });
