@@ -24,30 +24,54 @@ public class ClayFormingBlockRenderer implements BlockEntityRenderer<ClayForming
         boolean[][][] vox = be.getVoxelStates();
         if (tpl == null || vox == null) return;
 
-        int minY = be.getMinValidY();
-        int maxY = be.getCurrentHeight() - 1;
+        int minTemplateY = be.getMinValidY();
+
+        int maxTemplateY = -1;
+        for (int z = 0; z < ClayFormingBlockEntity.SIZE; z++) {
+            for (int y = ClayFormingBlockEntity.SIZE - 1; y >= 0; y--) {
+                for (int x = 0; x < ClayFormingBlockEntity.SIZE; x++) {
+                    if (tpl[z][y][x]) {
+                        maxTemplateY = Math.max(maxTemplateY, y);
+                    }
+                }
+            }
+        }
+
+        int renderMinY = minTemplateY;
+        int renderMaxY = Math.max(maxTemplateY, be.getCurrentHeight() - 1);
 
         ps.pushPose();
-        ps.translate(0, OFFSET - minY * UNIT, 0);
+
+        ps.translate(0, OFFSET - minTemplateY * UNIT, 0);
 
         VertexConsumer solid = buf.getBuffer(RenderType.entityTranslucent(TEXTURE));
         VertexConsumer line = buf.getBuffer(RenderType.lines());
 
         for (int z = 0; z < ClayFormingBlockEntity.SIZE; z++) {
-            for (int y = minY; y <= maxY; y++) {
+            for (int y = renderMinY; y <= renderMaxY; y++) {
+                if (y < 0 || y >= ClayFormingBlockEntity.SIZE) continue;
+
                 for (int x = 0; x < ClayFormingBlockEntity.SIZE; x++) {
-                    if (!tpl[z][y][x]) continue;
-                    ps.pushPose();
-                    ps.translate(x * UNIT, y * UNIT, z * UNIT);
-                    Matrix4f matrix = ps.last().pose();
-                    if (vox[z][y][x]) {
-                        int hash = x * 73856093 ^ y * 19349663 ^ z * 83492791;
-                        float u1 = (Math.abs(hash) % 16) / 16f, u2 = u1 + 1f / 16f;
-                        drawCube(solid, matrix, light, u1, u2);
-                    } else {
-                        drawWire(line, matrix);
+                    if (tpl[z][y][x]) {
+                        ps.pushPose();
+                        ps.translate(x * UNIT, y * UNIT, z * UNIT);
+                        Matrix4f matrix = ps.last().pose();
+
+                        if (vox[z][y][x]) {
+                            int hash = x * 73856093 ^ y * 19349663 ^ z * 83492791;
+                            float u1 = (Math.abs(hash) % 16) / 16f;
+                            float u2 = u1 + 1f / 16f;
+                            drawCube(solid, matrix, light, u1, u2);
+                        } else {
+                            if (y <= be.getCurrentHeight()) {
+                                ps.pushPose();
+                                ps.translate(0, -UNIT, 0);
+                                drawWire(line, ps.last().pose());
+                                ps.popPose();
+                            }
+                        }
+                        ps.popPose();
                     }
-                    ps.popPose();
                 }
             }
         }
@@ -57,22 +81,16 @@ public class ClayFormingBlockRenderer implements BlockEntityRenderer<ClayForming
     private void drawCube(VertexConsumer c, Matrix4f m, int light, float u1, float u2){
         float v1=0,v2=1, m0=0,M=UNIT;
         float[][] n={{0,1,0},{0,-1,0},{0,0,1},{0,0,-1},{1,0,0},{-1,0,0}};
-        // 顶
         quad(c,m,M,M,0, 0,M,0, u1,v1,u2,v2, n[0],light);
         quad(c,m,0,M,0, M,M,0, u1,v1,u2,v2, n[0],light);
-        // 底
         quad(c,m,0,0,M, M,0,M, u1,v1,u2,v2, n[1],light);
         quad(c,m,M,0,M, 0,0,M, u1,v1,u2,v2, n[1],light);
-        // 前
         quad(c,m,0,0,M, 0,M,M, u1,v1,u2,v2, n[2],light);
         quad(c,m,M,0,M, M,M,M, u1,v1,u2,v2, n[2],light);
-        // 后
         quad(c,m,M,0,0, M,M,0, u1,v1,u2,v2, n[3],light);
         quad(c,m,0,0,0, 0,M,0, u1,v1,u2,v2, n[3],light);
-        // 右
         quad(c,m,M,0,M, M,0,0, u1,v1,u2,v2, n[4],light);
         quad(c,m,M,M,M, M,M,0, u1,v1,u2,v2, n[4],light);
-        // 左
         quad(c,m,0,0,0, 0,0,M, u1,v1,u2,v2, n[5],light);
         quad(c,m,0,M,0, 0,M,M, u1,v1,u2,v2, n[5],light);
     }

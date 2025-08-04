@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,10 +45,23 @@ public class SetTemplatePacket {
             CarvingTemplate template = CarvingTemplateManager.getTemplate(pkt.templateId);
             if (template == null) return;
 
-            if ("clay_template".equals(template.getType())) {
-                CLAY_PLACE_STRATEGY.placeTemplateBlock(world, player, pkt.pos, pkt.templateId);
+            BlockState stateAtPos = world.getBlockState(pkt.pos);
+            if ("clay_template".equals(template.getType()) && stateAtPos.is(ModBlocks.CLAY_FORMING.get())) {
+                BlockEntity be = world.getBlockEntity(pkt.pos);
+                if (be instanceof TemplateAssignable assignable) {
+                    assignable.setTemplateId(pkt.templateId);
+                }
             } else {
-                FLINT_PLACE_STRATEGY.placeTemplateBlock(world, player, pkt.pos, pkt.templateId);
+                BlockPos placePos = pkt.pos.above();
+
+                Block blockToPlace;
+                if ("clay_template".equals(template.getType())) {
+                    blockToPlace = ModBlocks.CLAY_FORMING.get();
+                } else {
+                    blockToPlace = ModBlocks.CARVING_SLAB.get();
+                }
+
+                placeTemplateBlock(world, player, placePos, blockToPlace, pkt.templateId);
             }
         });
         ctx.get().setPacketHandled(true);
@@ -70,20 +84,19 @@ public class SetTemplatePacket {
         placeTemplateBlock(world, player, pos, blockToPlace, templateId);
     };
 
-    public static TemplatePlaceStrategy CLAY_PLACE_STRATEGY = (world, player, pos, templateId) -> {
+    public static TemplatePlaceStrategy CLAY_PLACE_STRATEGY = (world, player, basePos, templateId) -> {
         Block blockToPlace = ModBlocks.CLAY_FORMING.get();
-        placeTemplateBlock(world, player, pos, blockToPlace, templateId);
+        BlockPos placePos = basePos.above();
+        placeTemplateBlock(world, player, placePos, blockToPlace, templateId);
     };
 
     public static boolean placeTemplateBlock(
-            @NotNull Level world,
-            @NotNull ServerPlayer player,
-            @NotNull BlockPos pos,
-            @NotNull Block blockToPlace,
-            @NotNull ResourceLocation templateId
+            Level world,
+            ServerPlayer player,
+            BlockPos placePos,
+            Block blockToPlace,
+            ResourceLocation templateId
     ) {
-        BlockPos placePos = pos.above();
-
         if (!world.isEmptyBlock(placePos)) return false;
 
         boolean placed = world.setBlock(placePos, blockToPlace.defaultBlockState(), 3);
