@@ -44,48 +44,48 @@ public class ClayEventHandlers {
         boolean isClay = state.getBlock() == ModBlocks.CLAY_FORMING.get();
         boolean clayBall = held.getItem() == Items.CLAY_BALL;
 
-        if (isClay) {
-            if (!clayBall) {
-                event.setCanceled(true);
-                event.setCancellationResult(InteractionResult.SUCCESS);
+        if (isClay && clayBall) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (!(be instanceof ClayFormingBlockEntity clayBE)) {
                 return;
             }
 
-            BlockEntity be = level.getBlockEntity(pos);
-            if (!(be instanceof ClayFormingBlockEntity clayBE)) return;
-
             ResourceLocation templateId = clayBE.getTemplateId();
             if (templateId == null) {
-                if (player instanceof ServerPlayer sp) {
-                    NetworkHandler.sendToClient(sp, new OpenTemplateScreenPacket(pos, "clay_template"));
-                }
+                return;
+            }
+
+            CarvingTemplate template = CarvingTemplateManager.getTemplate(templateId);
+            if (template == null) {
                 event.setCanceled(true);
-                event.setCancellationResult(InteractionResult.SUCCESS);
+                event.setCancellationResult(InteractionResult.FAIL);
                 return;
             }
 
             Vec3 hit = event.getHitVec().getLocation();
             Vec3 rel = hit.subtract(pos.getX(), pos.getY(), pos.getZ());
 
-            final float OFFSET = (1f - 14f / 16f) / 2f;
-            final float SIZE = (14f / 16f) / 14f;
+            double rawX = rel.x * ClayFormingBlockEntity.SIZE;
+            double rawY = rel.y * ClayFormingBlockEntity.SIZE;
+            double rawZ = rel.z * ClayFormingBlockEntity.SIZE;
 
-            int x = (int) ((rel.x - OFFSET) / SIZE);
-            int y = (int) ((rel.y - OFFSET) / SIZE);
-            int z = (int) ((rel.z - OFFSET) / SIZE);
+            int x = (int) Math.floor(rawX - 0.001);
+            int y = (int) Math.floor(rawY - 0.001);
+            int z = (int) Math.floor(rawZ - 0.001);
 
-            if (x < 0 || x >= 14 || y < 0 || y >= 14 || z < 0 || z >= 14) {
-                event.setCanceled(true);
-                event.setCancellationResult(InteractionResult.FAIL);
-                return;
-            }
+            x = Math.max(0, Math.min(x, ClayFormingBlockEntity.SIZE - 1));
+            y = Math.max(0, Math.min(y, ClayFormingBlockEntity.SIZE - 1));
+            z = Math.max(0, Math.min(z, ClayFormingBlockEntity.SIZE - 1));
 
-            CarvingTemplate template = CarvingTemplateManager.getTemplate(templateId);
-            if (template != null && template.shouldCarve(x, y, z)) {
-                if (clayBE.tryForm(x, y, z)) {
+            if (template.shouldCarve(x, y, z)) {
+                boolean success = clayBE.tryForm(x, y, z);
+                if (success) {
                     level.playSound(null, pos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 0.5f, 1f);
                     event.setCanceled(true);
                     event.setCancellationResult(InteractionResult.SUCCESS);
+                } else {
+                    event.setCanceled(true);
+                    event.setCancellationResult(InteractionResult.FAIL);
                 }
             } else {
                 event.setCanceled(true);
@@ -94,7 +94,7 @@ public class ClayEventHandlers {
             return;
         }
 
-        if (clayBall && face == Direction.UP) {
+        if (clayBall && face == Direction.UP && !isClay) {
             BlockPos above = pos.above();
             BlockState aboveState = level.getBlockState(above);
             if (aboveState.canBeReplaced()

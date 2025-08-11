@@ -88,17 +88,17 @@ public class CarvingTemplate {
     }
 
     public void writeToNetwork(FriendlyByteBuf buf) {
-        buf.writeResourceLocation(id);
-        buf.writeUtf(name);
-        buf.writeUtf(type);
-        buf.writeItem(result);
-        buf.writeVarInt(sizeZ);
-        buf.writeVarInt(sizeY);
-        buf.writeVarInt(sizeX);
-        for (int z = 0; z < sizeZ; z++) {
-            for (int y = 0; y < sizeY; y++) {
-                for (int x = 0; x < sizeX; x++) {
-                    buf.writeBoolean(pattern[z][y][x]);
+        buf.writeResourceLocation(this.id);
+        buf.writeUtf(this.name);
+        buf.writeUtf(this.type);
+        buf.writeItem(this.result);
+        buf.writeVarInt(this.sizeZ);
+        buf.writeVarInt(this.sizeY);
+        buf.writeVarInt(this.sizeX);
+        for (int z = 0; z < this.sizeZ; z++) {
+            for (int y = 0; y < this.sizeY; y++) {
+                for (int x = 0; x < this.sizeX; x++) {
+                    buf.writeBoolean(this.pattern[z][y][x]);
                 }
             }
         }
@@ -107,7 +107,7 @@ public class CarvingTemplate {
     public static CarvingTemplate readFromNetwork(FriendlyByteBuf buf) {
         ResourceLocation id = buf.readResourceLocation();
         String name = buf.readUtf();
-        String type = buf.readUtf(); // 读取模板类型
+        String type = buf.readUtf();
         ItemStack result = buf.readItem();
         int z = buf.readVarInt();
         int y = buf.readVarInt();
@@ -147,8 +147,9 @@ public class CarvingTemplate {
         return this.pattern;
     }
 
+    // 修正这个方法：#位置返回true（需要填充），空格位置返回false（不需要填充）
     public boolean shouldCarve(int x, int y, int z) {
-        return x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ && !pattern[z][y][x];
+        return x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ && pattern[z][y][x];
     }
 
     public int getSizeX() { return sizeX; }

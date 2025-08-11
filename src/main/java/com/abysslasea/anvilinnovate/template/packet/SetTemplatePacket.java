@@ -43,17 +43,25 @@ public class SetTemplatePacket {
 
             Level world = player.getCommandSenderWorld();
             CarvingTemplate template = CarvingTemplateManager.getTemplate(pkt.templateId);
-            if (template == null) return;
+            if (template == null) {
+                return;
+            }
 
             BlockState stateAtPos = world.getBlockState(pkt.pos);
             if ("clay_template".equals(template.getType()) && stateAtPos.is(ModBlocks.CLAY_FORMING.get())) {
                 BlockEntity be = world.getBlockEntity(pkt.pos);
                 if (be instanceof TemplateAssignable assignable) {
                     assignable.setTemplateId(pkt.templateId);
+                    world.sendBlockUpdated(pkt.pos, stateAtPos, stateAtPos, 3);
+                    world.getServer().execute(() -> {
+                        world.sendBlockUpdated(pkt.pos, stateAtPos, stateAtPos, 3);
+                        world.getServer().execute(() -> {
+                            world.sendBlockUpdated(pkt.pos, stateAtPos, stateAtPos, 3);
+                        });
+                    });
                 }
             } else {
                 BlockPos placePos = pkt.pos.above();
-
                 Block blockToPlace;
                 if ("clay_template".equals(template.getType())) {
                     blockToPlace = ModBlocks.CLAY_FORMING.get();
@@ -61,7 +69,16 @@ public class SetTemplatePacket {
                     blockToPlace = ModBlocks.CARVING_SLAB.get();
                 }
 
-                placeTemplateBlock(world, player, placePos, blockToPlace, pkt.templateId);
+                boolean success = placeTemplateBlock(world, player, placePos, blockToPlace, pkt.templateId);
+                if (success) {
+                    world.getServer().execute(() -> {
+                        BlockState newState = world.getBlockState(placePos);
+                        world.sendBlockUpdated(placePos, newState, newState, 3);
+                        world.getServer().execute(() -> {
+                            world.sendBlockUpdated(placePos, newState, newState, 3);
+                        });
+                    });
+                }
             }
         });
         ctx.get().setPacketHandled(true);
@@ -98,16 +115,15 @@ public class SetTemplatePacket {
             ResourceLocation templateId
     ) {
         if (!world.isEmptyBlock(placePos)) return false;
-
         boolean placed = world.setBlock(placePos, blockToPlace.defaultBlockState(), 3);
         if (!placed) return false;
 
         BlockEntity be = world.getBlockEntity(placePos);
         if (be instanceof TemplateAssignable assignable) {
             assignable.setTemplateId(templateId);
+            world.sendBlockUpdated(placePos, world.getBlockState(placePos), world.getBlockState(placePos), 3);
             return true;
         }
-
         return false;
     }
 }

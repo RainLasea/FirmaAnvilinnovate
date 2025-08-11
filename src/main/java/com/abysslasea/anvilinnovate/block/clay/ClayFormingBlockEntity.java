@@ -52,7 +52,10 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
             return false;
         }
 
-        if (y > currentHeight) {
+        int relativeHeight = y - minValidY;
+        updateCurrentHeight();
+
+        if (relativeHeight > currentHeight) {
             return false;
         }
 
@@ -61,36 +64,105 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
         setChanged();
 
         checkLayerCompletion(y);
-
         checkTemplateCompletion();
 
         return true;
     }
 
-    private void checkLayerCompletion(int layerY) {
-        boolean layerComplete = true;
-        for (int z = 0; z < SIZE; z++) {
-            for (int x = 0; x < SIZE; x++) {
-                if (template.shouldCarve(x, layerY, z) && !voxels.get(idx(x, layerY, z))) {
-                    layerComplete = false;
+    private void updateCurrentHeight() {
+        if (template == null) return;
+
+        int newCurrentHeight = 0;
+
+        for (int checkY = minValidY; checkY < template.getSizeY(); checkY++) {
+            boolean layerComplete = true;
+            boolean hasContent = false;
+
+            for (int z = 0; z < SIZE && z < template.getSizeZ(); z++) {
+                for (int x = 0; x < SIZE && x < template.getSizeX(); x++) {
+                    if (template.shouldCarve(x, checkY, z)) {
+                        hasContent = true;
+                        if (!voxels.get(idx(x, checkY, z))) {
+                            layerComplete = false;
+                            break;
+                        }
+                    }
+                }
+                if (!layerComplete) break;
+            }
+
+            if (hasContent) {
+                int relativeHeight = checkY - minValidY;
+
+                if (layerComplete) {
+                    newCurrentHeight = relativeHeight + 1;
+                } else {
                     break;
                 }
             }
-            if (!layerComplete) break;
+        }
+
+        int maxPossibleHeight = template.getSizeY() - 1 - minValidY;
+        newCurrentHeight = Math.min(newCurrentHeight, maxPossibleHeight);
+
+        if (newCurrentHeight != currentHeight) {
+            currentHeight = newCurrentHeight;
+            setChanged();
+        }
+    }
+
+    private void checkLayerCompletion(int layerY) {
+        if (template == null) return;
+
+        boolean layerComplete = true;
+        int totalPositions = 0;
+        int filledPositions = 0;
+
+        for (int z = 0; z < SIZE && z < template.getSizeZ(); z++) {
+            for (int x = 0; x < SIZE && x < template.getSizeX(); x++) {
+                if (template.shouldCarve(x, layerY, z)) {
+                    totalPositions++;
+                    if (voxels.get(idx(x, layerY, z))) {
+                        filledPositions++;
+                    } else {
+                        layerComplete = false;
+                    }
+                }
+            }
         }
 
         if (layerComplete) {
-            currentHeight = Math.max(currentHeight, layerY + 1);
+            int relativeHeight = layerY - minValidY;
+            int newCurrentHeight = relativeHeight + 1;
+            int maxPossibleHeight = template.getSizeY() - 1 - minValidY;
+            newCurrentHeight = Math.min(newCurrentHeight, maxPossibleHeight);
+            currentHeight = Math.max(currentHeight, newCurrentHeight);
+
             level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
             setChanged();
         }
     }
 
+    private boolean hasContentAtLayer(int y) {
+        if (template == null) return false;
+
+        for (int z = 0; z < SIZE && z < template.getSizeZ(); z++) {
+            for (int x = 0; x < SIZE && x < template.getSizeX(); x++) {
+                if (template.shouldCarve(x, y, z)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void checkTemplateCompletion() {
+        if (template == null) return;
+
         boolean templateComplete = true;
-        for (int z = 0; z < SIZE; z++) {
-            for (int y = 0; y < SIZE; y++) {
-                for (int x = 0; x < SIZE; x++) {
+        for (int z = 0; z < SIZE && z < template.getSizeZ(); z++) {
+            for (int y = 0; y < SIZE && y < template.getSizeY(); y++) {
+                for (int x = 0; x < SIZE && x < template.getSizeX(); x++) {
                     if (template.shouldCarve(x, y, z) && !voxels.get(idx(x, y, z))) {
                         templateComplete = false;
                         break;
@@ -121,36 +193,65 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
         }
         tag.putByteArray("Voxels", voxels.toByteArray());
         tag.putInt("CurrentHeight", currentHeight);
+        tag.putInt("MinValidY", minValidY);
     }
 
     @Override
     public void load(@NotNull CompoundTag tag) {
         super.load(tag);
+
         if (tag.contains("TemplateId")) {
             this.templateId = new ResourceLocation(tag.getString("TemplateId"));
+
+            if (level != null && level.isClientSide()) {
+                this.template = null;
+                tryLoadTemplate();
+            }
         }
+
         if (tag.contains("Voxels")) {
             this.voxels.clear();
             this.voxels.or(BitSet.valueOf(tag.getByteArray("Voxels")));
         }
         this.currentHeight = tag.getInt("CurrentHeight");
-        if (level != null && level.isClientSide() && this.templateId != null) {
+        this.minValidY = tag.getInt("MinValidY");
+    }
+
+    private void tryLoadTemplate() {
+        if (this.templateId != null && this.template == null && level != null && level.isClientSide()) {
             this.template = CarvingTemplateManager.getTemplate(this.templateId);
             if (this.template != null) {
                 recalcRange();
+                updateCurrentHeight();
             }
+        }
+    }
+
+    public void refreshTemplate() {
+        if (level != null && level.isClientSide() && templateId != null) {
+            this.template = null;
+            tryLoadTemplate();
         }
     }
 
     @Override
     public void setTemplateId(@NotNull ResourceLocation id) {
         this.templateId = id;
+
         if (level != null && !level.isClientSide()) {
             this.template = CarvingTemplateManager.getTemplate(id);
             if (this.template != null) {
                 recalcRange();
+                this.currentHeight = 0;
             }
             setChanged();
+
+            BlockState state = getBlockState();
+            level.sendBlockUpdated(getBlockPos(), state, state, 3);
+
+        } else if (level != null && level.isClientSide()) {
+            this.template = null;
+            tryLoadTemplate();
         }
     }
 
@@ -159,11 +260,15 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
     }
 
     public CarvingTemplate getTemplate() {
+        if (template == null && templateId != null && level != null && level.isClientSide()) {
+            tryLoadTemplate();
+        }
         return template;
     }
 
     public boolean[][][] getTemplateData() {
-        return template == null ? null : template.getPattern();
+        CarvingTemplate currentTemplate = getTemplate();
+        return currentTemplate == null ? null : currentTemplate.getPattern();
     }
 
     public boolean[][][] getVoxelStates() {
@@ -182,23 +287,30 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
         return minValidY;
     }
 
+    public int getCurrentHeight() {
+        return currentHeight;
+    }
+
+    public int getCurrentAbsoluteHeight() {
+        return minValidY + currentHeight;
+    }
+
+    public int getMaxFillableY() {
+        if (template == null) return 0;
+        updateCurrentHeight();
+        return minValidY + currentHeight;
+    }
+
     @Override
     public @NotNull CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag);
+        return tag;
     }
 
     @Override
     public void handleUpdateTag(@NotNull CompoundTag tag) {
         load(tag);
-
-        if (level != null && level.isClientSide()) {
-            if (this.templateId != null) {
-                this.template = CarvingTemplateManager.getTemplate(this.templateId);
-                if (this.template != null) {
-                    recalcRange();
-                }
-            }
-        }
     }
 
     @Nullable
@@ -211,12 +323,16 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
     public void onDataPacket(@NotNull Connection net, @NotNull ClientboundBlockEntityDataPacket pkt) {
         CompoundTag tag = pkt.getTag();
         if (tag != null) {
-            handleUpdateTag(tag);
+            load(tag);
         }
     }
 
-    public int getCurrentHeight() {
-        return currentHeight;
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && level.isClientSide() && templateId != null && template == null) {
+            tryLoadTemplate();
+        }
     }
 
     private void recalcRange() {
@@ -225,16 +341,16 @@ public class ClayFormingBlockEntity extends BlockEntity implements SetTemplatePa
             minValidY = 0;
             return;
         }
-        for (int z = 0; z < SIZE; z++) {
-            for (int y = 0; y < SIZE; y++) {
-                for (int x = 0; x < SIZE; x++) {
-                    if (template.shouldCarve(x, y, z)) {
-                        minValidY = Math.min(minValidY, y);
-                        return;
-                    }
-                }
+
+        for (int y = 0; y < SIZE && y < template.getSizeY(); y++) {
+            if (hasContentAtLayer(y)) {
+                minValidY = y;
+                break;
             }
         }
-        minValidY = 0;
+
+        if (minValidY == SIZE) {
+            minValidY = 0;
+        }
     }
 }

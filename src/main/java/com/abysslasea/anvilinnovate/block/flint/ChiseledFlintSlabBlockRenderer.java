@@ -26,8 +26,8 @@ public class ChiseledFlintSlabBlockRenderer implements BlockEntityRenderer<Chise
     private static final float OFFSET = (1f - TOTAL_RENDER_SIZE) / 2f;
     private static final float BASE_Y_OFFSET = 0.002f;
 
-    private static final int BORDER_R = 0x33;
-    private static final int BORDER_G = 0x66;
+    private static final int BORDER_R = 0x00;
+    private static final int BORDER_G = 0x00;
     private static final int BORDER_B = 0xFF;
     private static final int BORDER_A = 0xFF;
     private static final ResourceLocation CHISELED_FLINT_TEXTURE =
@@ -185,19 +185,19 @@ public class ChiseledFlintSlabBlockRenderer implements BlockEntityRenderer<Chise
                          int r, int g, int b, int a,
                          int overlay, int lightmap) {
 
-        c.vertex(pose, x1, y1, z1).color(r, g, b, a).uv(u1, v2)  // 左下
+        c.vertex(pose, x1, y1, z1).color(r, g, b, a).uv(u1, v2)
                 .overlayCoords(overlay).uv2(lightmap)
                 .normal(normal.x(), normal.y(), normal.z()).endVertex();
 
-        c.vertex(pose, x2, y2, z2).color(r, g, b, a).uv(u1, v1)  // 左上
+        c.vertex(pose, x2, y2, z2).color(r, g, b, a).uv(u1, v1)
                 .overlayCoords(overlay).uv2(lightmap)
                 .normal(normal.x(), normal.y(), normal.z()).endVertex();
 
-        c.vertex(pose, x3, y3, z3).color(r, g, b, a).uv(u2, v1)  // 右上
+        c.vertex(pose, x3, y3, z3).color(r, g, b, a).uv(u2, v1)
                 .overlayCoords(overlay).uv2(lightmap)
                 .normal(normal.x(), normal.y(), normal.z()).endVertex();
 
-        c.vertex(pose, x4, y4, z4).color(r, g, b, a).uv(u2, v2)  // 右下
+        c.vertex(pose, x4, y4, z4).color(r, g, b, a).uv(u2, v2)
                 .overlayCoords(overlay).uv2(lightmap)
                 .normal(normal.x(), normal.y(), normal.z()).endVertex();
     }

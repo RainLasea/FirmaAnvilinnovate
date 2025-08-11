@@ -12,11 +12,14 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.util.*;
 
+@Mod.EventBusSubscriber(modid = "anvilinnovate", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class CarvingTemplateManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final CarvingTemplateManager INSTANCE = new CarvingTemplateManager();
@@ -25,6 +28,13 @@ public class CarvingTemplateManager extends SimpleJsonResourceReloadListener {
     private static final Map<ResourceLocation, CarvingTemplate> CLIENT_TEMPLATES = new HashMap<>();
 
     private MinecraftServer server;
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            NetworkHandler.sendToClient(player, new SyncTemplatesPacket(new ArrayList<>(SERVER_TEMPLATES.values())));
+        }
+    }
 
     public CarvingTemplateManager() {
         super(GSON, "templates");
@@ -77,6 +87,11 @@ public class CarvingTemplateManager extends SimpleJsonResourceReloadListener {
 
     public static Collection<ResourceLocation> getTemplateIds() {
         return isClient() ? CLIENT_TEMPLATES.keySet() : SERVER_TEMPLATES.keySet();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public static int getClientTemplateCount() {
+        return CLIENT_TEMPLATES.size();
     }
 
     @OnlyIn(Dist.CLIENT)

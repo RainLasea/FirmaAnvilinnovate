@@ -48,8 +48,8 @@ public class ClayFormingBlock extends Block implements EntityBlock {
             if (clayBE.getTemplateId() == null) {
                 return FULL_SHAPE;
             }
-            double height = Math.max(1, clayBE.getCurrentHeight()) * (16.0 / ClayFormingBlockEntity.SIZE);
-            return Block.box(0, 0, 0, 16, height, 16);
+            double height = Math.max(1, clayBE.getCurrentAbsoluteHeight() + 1) * (16.0 / ClayFormingBlockEntity.SIZE);
+            return Block.box(0, 0, 0, 16, Math.min(16, height), 16);
         }
         return FULL_SHAPE;
     }
@@ -61,10 +61,10 @@ public class ClayFormingBlock extends Block implements EntityBlock {
             if (clayBE.getTemplateId() == null) {
                 return FULL_SHAPE;
             }
-            int maxLayer = clayBE.getCurrentHeight();
-            if (maxLayer < 0) maxLayer = 0;
+            int maxLayer = clayBE.getCurrentAbsoluteHeight();
+            if (maxLayer < 0) maxLayer = clayBE.getMinValidY();
             double height = (maxLayer + 1) * (16.0 / ClayFormingBlockEntity.SIZE);
-            return Block.box(0, 0, 0, 16, height, 16);
+            return Block.box(0, 0, 0, 16, Math.min(16, height), 16);
         }
         return Shapes.empty();
     }
@@ -81,7 +81,11 @@ public class ClayFormingBlock extends Block implements EntityBlock {
             return InteractionResult.PASS;
         }
 
-        if (clayBE.getTemplate() == null) {
+        if (clayBE.getTemplateId() != null && clayBE.getTemplate() == null && level.isClientSide()) {
+            clayBE.refreshTemplate();
+        }
+
+        if (clayBE.getTemplateId() == null) {
             if (!level.isClientSide()) {
                 if (player instanceof ServerPlayer sp) {
                     NetworkHandler.sendToClient(sp, new OpenTemplateScreenPacket(pos, "clay_template"));
@@ -90,30 +94,13 @@ public class ClayFormingBlock extends Block implements EntityBlock {
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
 
-        double hitX = hit.getLocation().x - pos.getX();
-        double hitY = hit.getLocation().y - pos.getY();
-        double hitZ = hit.getLocation().z - pos.getZ();
-
-        int voxelX = (int) (hitX * ClayFormingBlockEntity.SIZE);
-        int voxelY = (int) (hitY * ClayFormingBlockEntity.SIZE);
-        int voxelZ = (int) (hitZ * ClayFormingBlockEntity.SIZE);
-
-        if (voxelX < 0 || voxelX >= ClayFormingBlockEntity.SIZE ||
-                voxelY < 0 || voxelY >= ClayFormingBlockEntity.SIZE ||
-                voxelZ < 0 || voxelZ >= ClayFormingBlockEntity.SIZE) {
-            return InteractionResult.PASS;
+        if (clayBE.getTemplate() == null) {
+            return InteractionResult.CONSUME;
         }
 
         ItemStack heldItem = player.getItemInHand(hand);
         if (heldItem.getItem() == Items.CLAY_BALL) {
-            boolean changed = clayBE.tryForm(voxelX, voxelY, voxelZ);
-            if (changed) {
-                if (!player.getAbilities().instabuild) {
-                    heldItem.shrink(1);
-                }
-                level.playSound(null, pos, SoundEvents.GRAVEL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                return InteractionResult.sidedSuccess(level.isClientSide());
-            }
+            return InteractionResult.PASS;
         }
 
         return InteractionResult.PASS;
